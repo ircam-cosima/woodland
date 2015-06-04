@@ -1,0 +1,34 @@
+@import 'woodland';
+
+.launcher {
+
+  button {
+    min-width: 2em;
+  }
+}
+
+.master-gain,
+.gain-threshold,
+.delay-threshold,
+.air-speed,
+.air-absorption,
+.reflection-transmission {
+
+  div {
+    @include display-inline-flex;
+    margin-bottom: .25em;
+    margin-top: .25em;
+  }
+
+  button.input-control {
+    min-width: 2em;
+  }
+
+  input {
+    margin-left: .25em;
+    margin-right: .25em;
+    text-align: center;
+    width: 5em;
+  }
+
+}
