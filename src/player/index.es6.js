@@ -9,6 +9,7 @@ app.clientSide = require('soundworks/client');
 app.client = app.clientSide.client;
 
 app.audio = require('./audio');
+app.dom = require('../common/dom');
 app.input = require('../common/acceleration');
 app.distances = require('../common/distances');
 
