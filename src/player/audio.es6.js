@@ -157,7 +157,8 @@ audio.Propagation = class {
     // single channel
     this.propagationBuffer = audio.context.createBuffer(
       1,
-      1 + maxDelay * sampleRate, // including last value
+      Math.max(2, // iOS does not play a single-sample buffer
+               1 + maxDelay * sampleRate), // including last value
       sampleRate);
 
     const data = this.propagationBuffer.getChannelData(0);

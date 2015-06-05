@@ -150,9 +150,9 @@ dom.GainThreshold = class {
     child = new dom.Button( {
       DOMOrigin: this.element,
       DOMClass: 'input-control',
-      text: '=-30',
+      text: '=-20',
       setter: () => {
-        that.setter(-30);
+        that.setter(-20);
         that.input.update();
       }
     } );
@@ -233,9 +233,29 @@ dom.DelayThreshold = class {
     child = new dom.Button( {
       DOMOrigin: this.element,
       DOMClass: 'input-control',
+      text: '=3',
+      setter: () => {
+        that.setter(10);
+        that.input.update();
+      }
+    } );
+
+    child = new dom.Button( {
+      DOMOrigin: this.element,
+      DOMClass: 'input-control',
       text: '=10',
       setter: () => {
         that.setter(10);
+        that.input.update();
+      }
+    } );
+
+    child = new dom.Button( {
+      DOMOrigin: this.element,
+      DOMClass: 'input-control',
+      text: '=30',
+      setter: () => {
+        that.setter(30);
         that.input.update();
       }
     } );
@@ -316,6 +336,46 @@ dom.AirSpeed = class {
     child = new dom.Button( {
       DOMOrigin: this.element,
       DOMClass: 'input-control',
+      text: '=0.1',
+      setter: () => {
+        that.setter(0.1);
+        that.input.update();
+      }
+    } );
+
+    child = new dom.Button( {
+      DOMOrigin: this.element,
+      DOMClass: 'input-control',
+      text: '=1',
+      setter: () => {
+        that.setter(1);
+        that.input.update();
+      }
+    } );
+
+    child = new dom.Button( {
+      DOMOrigin: this.element,
+      DOMClass: 'input-control',
+      text: '=3',
+      setter: () => {
+        that.setter(3);
+        that.input.update();
+      }
+    } );
+
+    child = new dom.Button( {
+      DOMOrigin: this.element,
+      DOMClass: 'input-control',
+      text: '=30',
+      setter: () => {
+        that.setter(30);
+        that.input.update();
+      }
+    } );
+
+    child = new dom.Button( {
+      DOMOrigin: this.element,
+      DOMClass: 'input-control',
       text: '=330',
       setter: () => {
         that.setter(330);
@@ -346,7 +406,7 @@ dom.AirSpeed = class {
 
 }; // AirSpeed
 
-dom.AirAbsorption = class {
+dom.DistanceSpread = class {
   constructor(params) {
     this.setter = params.setter; // undefined is fine
     this.getter = params.getter; // undefined is fine
@@ -356,11 +416,11 @@ dom.AirAbsorption = class {
                    ? params.DOMOrigin : document.body);
 
     this.element = document.createElement('div');
-    this.element.classList.add('air-absorption');
+    this.element.classList.add('distance-spread');
     origin.appendChild(this.element);
 
     let child = document.createElement('div');
-    child.innerHTML = 'Air absorption ';
+    child.innerHTML = 'Distance spread ';
     this.element.appendChild(child);
 
     const that = this; // problem with gulp-es6-transpiler 1.0.1
@@ -398,9 +458,29 @@ dom.AirAbsorption = class {
     child = new dom.Button( {
       DOMOrigin: this.element,
       DOMClass: 'input-control',
-      text: '=-3',
+      text: '=1',
       setter: () => {
-        that.setter(-3);
+        that.setter(1);
+        that.input.update();
+      }
+    } );
+
+    child = new dom.Button( {
+      DOMOrigin: this.element,
+      DOMClass: 'input-control',
+      text: '=3',
+      setter: () => {
+        that.setter(3);
+        that.input.update();
+      }
+    } );
+
+    child = new dom.Button( {
+      DOMOrigin: this.element,
+      DOMClass: 'input-control',
+      text: '=6',
+      setter: () => {
+        that.setter(6);
         that.input.update();
       }
     } );
@@ -426,7 +506,7 @@ dom.AirAbsorption = class {
     this.input.update();
   }
 
-}; // AirAbsorption
+}; // DistanceSpread
 
 dom.ReflectionTransmission = class {
   constructor(params) {
@@ -480,9 +560,49 @@ dom.ReflectionTransmission = class {
     child = new dom.Button( {
       DOMOrigin: this.element,
       DOMClass: 'input-control',
-      text: '=0.95',
+      text: '=0',
       setter: () => {
-        that.setter(0.95);
+        that.setter(0);
+        that.input.update();
+      }
+    } );
+
+    child = new dom.Button( {
+      DOMOrigin: this.element,
+      DOMClass: 'input-control',
+      text: '=0.1',
+      setter: () => {
+        that.setter(0.1);
+        that.input.update();
+      }
+    } );
+
+    child = new dom.Button( {
+      DOMOrigin: this.element,
+      DOMClass: 'input-control',
+      text: '=0.3',
+      setter: () => {
+        that.setter(0.3);
+        that.input.update();
+      }
+    } );
+
+    child = new dom.Button( {
+      DOMOrigin: this.element,
+      DOMClass: 'input-control',
+      text: '=0.7',
+      setter: () => {
+        that.setter(0.7);
+        that.input.update();
+      }
+    } );
+
+    child = new dom.Button( {
+      DOMOrigin: this.element,
+      DOMClass: 'input-control',
+      text: '=0.9',
+      setter: () => {
+        that.setter(0.9);
         that.input.update();
       }
     } );

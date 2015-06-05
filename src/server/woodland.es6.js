@@ -42,8 +42,8 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.gainThreshold = -20; // dB
     this.delayThreshold = 3; // s
     this.airSpeed = 330; // m.s^-1
-    this.airAbsorption = 6; // dB/m (reference at 1 m)
-    this.reflectionTransmission = 0.95; // per reflection
+    this.distanceSpread = 6; // dB/m (reference at 1 m)
+    this.reflectionTransmission = 0.7; // per reflection
 
     this.propagations = 0;
     // TODO: add low-pass filters
@@ -76,20 +76,17 @@ class WoodlandServerPerformance extends serverSide.Performance {
     });
 
     client.receive('woodland:launcher-request', () => {
-      if(this.launcher !== null) {
-        this.server.broadcast('druid', 'woodland:launcher',
-                              this.launcher.modules.checkin.label);
-      }
+      this.server.broadcast('druid', 'woodland:launcher',
+                            (this.launcher !== null
+                             ? this.launcher.modules.checkin.label
+                             : 'none') );
     });
 
     client.receive('woodland:launcher', (label) => {
       const client = this.clients.find( (e) => {
         return e.modules.checkin.label === label;
       } );
-
-      if(client !== undefined) {
-        this.setLauncher(client);
-      }
+      this.setLauncher(client);
     });
 
     this.sendLabels();
@@ -114,8 +111,6 @@ class WoodlandServerPerformance extends serverSide.Performance {
         this.setReceiver(source);
 
         this.propagate(source.modules.checkin.index);
-
-        // this.setLauncher(source);
       }
     });
 
@@ -148,8 +143,8 @@ class WoodlandServerPerformance extends serverSide.Performance {
         this.airSpeed = params.airSpeed;
       }
 
-      if(typeof params.airAbsorption !== 'undefined') {
-        this.airAbsorption = params.airAbsorption;
+      if(typeof params.distanceSpread !== 'undefined') {
+        this.distanceSpread = params.distanceSpread;
       }
 
       if(typeof params.reflectionTransmission !== 'undefined') {
@@ -193,7 +188,9 @@ class WoodlandServerPerformance extends serverSide.Performance {
   }
 
   setLauncher(client) {
-    this.launcher = client;
+    this.launcher = (typeof client !== 'undefined'
+                     ? client
+                     : null);
     const label = (this.launcher !== null
                    ? this.launcher.modules.checkin.label
                    : 'none');
@@ -220,7 +217,7 @@ class WoodlandServerPerformance extends serverSide.Performance {
       gainThreshold: this.gainThreshold,
       delayThreshold: this.delayThreshold,
       airSpeed: this.airSpeed,
-      airAbsorption: this.airAbsorption,
+      distanceSpread: this.distanceSpread,
       reflectionTransmission: this.reflectionTransmission
     };
 
@@ -242,8 +239,7 @@ class WoodlandServerPerformance extends serverSide.Performance {
     const linearGainThreshold = utils.dBToLin(this.gainThreshold);
     const airSpeedInv = 1 / this.airSpeed;
     // reference is 6 dB for natural inverse square law
-    const gainExponent = -utils.dBToLin(this.airAbsorption / 6);
-
+    const gainExponent = -utils.dBToLin(this.distanceSpread / 6);
 
     let ongoing = true;
     let diffusionsNb = 0;
@@ -287,9 +283,6 @@ class WoodlandServerPerformance extends serverSide.Performance {
               const gain = source[1]
                       * this.reflectionTransmission
                       * Math.pow(distanceClipped, gainExponent);
-
-                      // * utils.dBToLin(this.airAbsorption * distanceClipped);
-
               const delay = airSpeedInv * distance;
               if(gain > linearGainThreshold && delay < this.delayThreshold) {
                 if(sources[d].length < diffusionsNbMax) {

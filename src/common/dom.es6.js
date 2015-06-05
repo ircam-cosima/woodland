@@ -203,11 +203,10 @@ dom.ExclusiveToggles = class {
   }
 
   setOptions(options = {}) {
+    // old is a NodeList, which is not iterable
     const old = this.element.querySelectorAll('button');
-    if(typeof old !== 'undefined' && old.length !== 0) {
-      for(let o of old) {
-        this.element.removeChild(o);
-      }
+    for(let o = 0; o < old.length; ++o) {
+      this.element.removeChild(old[o]);
     }
 
     const that = this; // problem with gulp-es6-transpiler 1.0.1

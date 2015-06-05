@@ -76,14 +76,14 @@ class DruidClientPerformance extends app.clientSide.Performance {
       getter: () => { return that.airSpeed; }
     } );
 
-    this.airAbsorption = 0;
-    this.display.airAbsorption = new app.dom.AirAbsorption( {
+    this.distanceSpread = 0;
+    this.display.distanceSpread = new app.dom.DistanceSpread( {
       DOMOrigin: that.view,
       setter: (value) => {
-        that.airAbsorption = parseFloat(value);
+        that.distanceSpread = parseFloat(value);
         that.parametersSend();
       },
-      getter: () => { return that.airAbsorption; }
+      getter: () => { return that.distanceSpread; }
     } );
 
     this.reflectionTransmission = 0;
@@ -102,7 +102,8 @@ class DruidClientPerformance extends app.clientSide.Performance {
   }
 
   labelsUpdate(labels) {
-    this.labels = labels;
+    this.labels = labels.slice(0);
+    this.labels.unshift('none');
     this.display.launcher.setOptions(this.labels);
   }
 
@@ -122,7 +123,7 @@ class DruidClientPerformance extends app.clientSide.Performance {
       gainThreshold: this.gainThreshold,
       delayThreshold: this.delayThreshold,
       airSpeed: this.airSpeed,
-      airAbsorption: this.airAbsorption,
+      distanceSpread: this.distanceSpread,
       reflectionTransmission: this.reflectionTransmission
     } );
 
@@ -153,9 +154,9 @@ class DruidClientPerformance extends app.clientSide.Performance {
         that.display.airSpeed.update();
       }
 
-      if(typeof params.airAbsorption !== 'undefined') {
-        that.airAbsorption = params.airAbsorption;
-        that.display.airAbsorption.update();
+      if(typeof params.distanceSpread !== 'undefined') {
+        that.distanceSpread = params.distanceSpread;
+        that.display.distanceSpread.update();
       }
 
       if(typeof params.reflectionTransmission !== 'undefined') {

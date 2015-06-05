@@ -121,6 +121,7 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
 
     app.client.receive('woodland:launcher', (label) => {
       // launcher time
+      this.display.status.update('...');
       this.display.receiver.element.style.display = 'none';
 
       const enabled = this.checkin.label === label;
@@ -148,12 +149,12 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
     } );
 
     app.client.receive('woodland:render', (time) => {
+      this.display.status.update('rendering');
       this.propagation.render(
         this.sync.getLocalTime(time - this.compensation.delay),
         () => {
           this.display.status.update('...');
       });
-      this.display.status.update('rendering');
     });
 
     this.distances = null;
@@ -184,8 +185,8 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
       this.shaker.stop();
       this.acceleration.removeListener(this.launcherHandler);
       app.debug('launched');
-      app.client.send('woodland:launched');
       this.display.status.update('launched');
+      app.client.send('woodland:launched');
     }
   }
 
