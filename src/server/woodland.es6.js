@@ -166,6 +166,11 @@ class WoodlandServerPerformance extends serverSide.Performance {
       this.sendParameters();
     } );
 
+    client.receive('woodland:render-request', () => {
+      this.server.broadcast('player', 'woodland:render',
+                            this.sync.getSyncTime() + this.lookahead);
+    });
+
   }
 
   exit(client) {

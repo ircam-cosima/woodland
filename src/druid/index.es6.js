@@ -21,6 +21,13 @@ class DruidClientPerformance extends app.clientSide.Performance {
 
     this.display = {};
 
+    this.display.render = new app.dom.Button( {
+      DOMOrigin: this.view,
+      DOMClass: 'render',
+      text: 'Render',
+      setter: () => { that.renderRequest(); }
+    } );
+
     this.receiver = '';
     this.display.receiverElement = app.dom.createReceiverElement(this.view);
 
@@ -123,6 +130,10 @@ class DruidClientPerformance extends app.clientSide.Performance {
       reflectionTransmission: this.reflectionTransmission
     } );
 
+  }
+
+  renderRequest() {
+    app.client.send('woodland:render-request');
   }
 
   start() {
