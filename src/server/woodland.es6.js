@@ -27,12 +27,20 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.launcher = null;
 
     this.flatnesses = [];
+    this.flatnessesExpected = 0; // when request is made
+    this.flatnessesTimeoutDuration = 5; // seconds
+    this.flatnessesTimeoutID = 0;
+
+    this.propagations = 0;
+    this.propagationsExpected = 0; // when request is made
+    this.propagationsTimeoutDuration = 30; // seconds after previous reply
+    this.propagationsTimeoutID = 0;
+
+    // TODO: add low-pass filters
 
     this.distances = new distances.Distances( {
       coordinates: this.setup.coordinates
     } );
-
-
 
     this.lookahead = 1; // second
     this.active = true;
@@ -40,13 +48,10 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.masterGain = 0; // dB
 
     this.gainThreshold = -20; // dB
-    this.delayThreshold = 3; // s
+    this.delayThreshold = 30; // s
     this.airSpeed = 330; // m.s^-1
     this.distanceSpread = 6; // dB/m (reference at 1 m)
     this.reflectionTransmission = 0.7; // per reflection
-
-    this.propagations = 0;
-    // TODO: add low-pass filters
   }
 
   enter(client) {
@@ -94,31 +99,37 @@ class WoodlandServerPerformance extends serverSide.Performance {
       this.sendLabels();
     });
 
-
     client.receive('woodland:launched', () => {
       debug('launched');
       this.setLauncher(null);
       this.flatnesses = [];
+      this.flatnessesExpected = this.players.length;
       this.server.broadcast('player', 'woodland:flatness-request');
+      this.flatnessesTimeoutID = setTimeout( () => {
+        debug('flatnesses time-out');
+        this.flatnessesCompleted();
+      }, this.flatnessesTimeoutDuration * 1000);
     } );
-
 
     client.receive('woodland:flatness', (flatness) => {
       this.flatnesses.push([flatness, client]);
-      if(this.flatnesses.length === this.players.length) {
-        this.flatnesses.sort();
-        const source = this.flatnesses[this.flatnesses.length - 1][1];
-        this.setReceiver(source);
-
-        this.propagate(source.modules.checkin.index);
+      if(this.flatnesses.length === this.flatnessesExpected) {
+        this.flatnessesCompleted();
       }
     });
 
     client.receive('woodland:propagated', () => {
       ++this.propagations;
-      if(this.propagations === this.players.length) {
-        this.server.broadcast('player', 'woodland:render',
-                              this.sync.getSyncTime() + this.lookahead);
+
+      // relative time-out after previous reply
+      clearTimeout(this.propagationsTimeoutID);
+      if(this.propagations === this.propagationsExpected) {
+        this.propagationsCompleted();
+      } else {
+        this.propagationsTimeoutID = setTimeout( () => {
+          debug('propagations time-out');
+          this.propagationsCompleted();
+        }, this.propagationsTimeoutDuration * 1000);
       }
     });
 
@@ -225,6 +236,23 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.server.broadcast('druid', 'woodland:parameters', params);
   }
 
+  flatnessesCompleted() {
+    clearTimeout(this.flatnessesTimeoutID);
+    this.flatnesses.sort();
+    const source = this.flatnesses[this.flatnesses.length - 1][1];
+    this.flatnessesExpected = 0; // completed
+    this.setReceiver(source);
+
+    this.propagate(source.modules.checkin.index);
+  }
+
+  propagationsCompleted() {
+    clearTimeout(this.propagationsTimeoutID);
+    this.propagationsExpected = 0; // completed
+    this.server.broadcast('player', 'woodland:render',
+                          this.sync.getSyncTime() + this.lookahead);
+  }
+
   propagate(origin) {
     let sources = []; // [distance, gain, delay]
     let destinations = []; // [distance, gain, delay]
@@ -302,6 +330,7 @@ class WoodlandServerPerformance extends serverSide.Performance {
     } // while ongoing
 
     this.propagations = 0;
+    this.propagationsExpected = this.players.length;
     for(let c = 0; c < this.clients.length; ++c) {
       const client = this.clients[c];
       if(client.type === 'player') {

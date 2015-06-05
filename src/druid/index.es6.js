@@ -15,10 +15,6 @@ app.dom = require('./dom');
 app.client.init('druid');
 
 class DruidClientPerformance extends app.clientSide.Performance {
-  /**
-   * @constructs CalibrationClient
-   * @param {Object} options passed to clientSide.Performance
-   */
   constructor(options = {}) {
     super(options);
     const that = this;

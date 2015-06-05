@@ -174,14 +174,16 @@ audio.Propagation = class {
 
 
   render(time, callback) {
-    const propagation = audio.context.createBufferSource();
-    propagation.buffer = this.propagationBuffer;
-    propagation.connect(this.convolver);
+    if(this.propagationBuffer !== null) {
+      const propagation = audio.context.createBufferSource();
+      propagation.buffer = this.propagationBuffer;
+      propagation.connect(this.convolver);
 
-    if(typeof callback !== 'undefined') {
-      propagation.onended = callback;
+      if(typeof callback !== 'undefined') {
+        propagation.onended = callback;
+      }
+      propagation.start(time);
     }
-    propagation.start(time);
   }
 
 };
