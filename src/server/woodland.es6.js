@@ -7,7 +7,8 @@ const debug = require('debug')('soundworks:woodland');
 const serverSide = require('soundworks/server');
 
 const distances = require('../common/distances');
-let utils = require('../common/utils');
+const utils = require('../common/utils');
+const files = require('../common/files');
 
 class WoodlandServerPerformance extends serverSide.Performance {
   constructor(params = {}) {
@@ -45,6 +46,7 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.lookahead = 1; // second
     this.active = true;
 
+    this.soundFile = files.sounds[0];
     this.masterGain = 0; // dB
 
     this.gainThreshold = -20; // dB
@@ -138,6 +140,10 @@ class WoodlandServerPerformance extends serverSide.Performance {
     } );
 
     client.receive('woodland:parameters', (params) => {
+      if(typeof params.soundFile !== 'undefined') {
+        this.soundFile = params.soundFile;
+      }
+
       if(typeof params.masterGain !== 'undefined') {
         this.masterGain = params.masterGain;
       }
@@ -229,6 +235,7 @@ class WoodlandServerPerformance extends serverSide.Performance {
 
   sendParameters() {
     const params = {
+      soundFile: this.soundFile,
       masterGain: this.masterGain,
       gainThreshold: this.gainThreshold,
       delayThreshold: this.delayThreshold,

@@ -12,6 +12,7 @@ app.audio = require('./audio');
 app.dom = require('../common/dom');
 app.input = require('../common/acceleration');
 app.distances = require('../common/distances');
+app.files = require('../common/files');
 
 // Initialise the client with its type
 // ('player' clients connect via the root URL)
@@ -85,17 +86,15 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
     this.audioFiles = [];
     this.audioBuffers = [];
 
-    const sounds = ['pot-hit-1_c.mp3', 'pot-hit-2_c.mp3'];
-    for(let i = 0; i < sounds.length; i++) {
-      this.audioFiles.push('sounds/' + sounds[i]);
+    for(let i = 0; i < app.files.sounds.length; i++) {
+      this.audioFiles.push('sounds/' + app.files.sounds[i]);
     }
     this.loader = new app.clientSide.Loader({
       files: this.audioFiles
     });
 
     this.loader.on('loader:allFilesLoaded', () => {
-      for(let i = 0; i < sounds.length; i++) {
-        const sound = sounds[i];
+      for(let i = 0; i < app.files.sounds.length; i++) {
         this.audioBuffers[i] = this.loader.buffers[i];
       }
 
@@ -103,6 +102,13 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
     });
 
     app.client.receive('woodland:parameters', (params) => {
+      if(typeof params.soundFile !== 'undefined') {
+        const index = app.files.sounds.indexOf(params.soundFile);
+        if(index !== -1) {
+          this.propagation.setSound(this.audioBuffers[index]);
+        }
+      }
+
       if(typeof params.masterGain !== 'undefined') {
         this.propagation.masterGainSet(
           params.masterGain - this.compensation.gain);

@@ -9,6 +9,7 @@ app.clientSide = require('soundworks/client');
 app.client = app.clientSide.client;
 
 app.dom = require('./dom');
+app.files = require('../common/files');
 
 // Initialise the client with its type
 // ('player' clients connect via the root URL)
@@ -26,6 +27,18 @@ class DruidClientPerformance extends app.clientSide.Performance {
       DOMClass: 'render',
       text: 'Render',
       setter: () => { that.renderRequest(); }
+    } );
+
+    this.soundFile = app.files.sounds[0];
+    this.display.soundFile = new app.dom.Select( {
+      DOMOrigin: this.view,
+      DOMClass: 'sound-file',
+      options: app.files.sounds,
+      setter: (value) => {
+        that.soundFile = value;
+        that.parametersSend();
+      },
+      getter: () => { return that.soundFile; }
     } );
 
     this.receiver = '';
@@ -122,6 +135,7 @@ class DruidClientPerformance extends app.clientSide.Performance {
 
   parametersSend() {
     app.client.send('woodland:parameters', {
+      soundFile: this.soundFile,
       masterGain: this.masterGain,
       gainThreshold: this.gainThreshold,
       delayThreshold: this.delayThreshold,
@@ -141,6 +155,11 @@ class DruidClientPerformance extends app.clientSide.Performance {
     const that = this;
 
     app.client.receive('woodland:parameters', (params) => {
+      if(typeof params.soundFile !== 'undefined') {
+        that.soundFile = params.soundFile;
+        that.display.soundFile.update();
+      }
+
       if(typeof params.masterGain !== 'undefined') {
         that.masterGain = params.masterGain;
         that.display.masterGain.update();
