@@ -1,5 +1,4 @@
 {
-    "height": 2,
     "order": "random",
     "positions": [
         ["1", [-0.9, 3] ],
@@ -33,5 +32,6 @@
         ["29", [-2, -0.65] ]
         ],
     "spacing": 1,
-    "width": 2
+    "height": 6,
+    "width": 6
 }
