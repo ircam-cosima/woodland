@@ -279,7 +279,7 @@ class WoodlandServerPerformance extends serverSide.Performance {
     const linearGainThreshold = utils.dBToLin(this.gainThreshold);
     const airSpeedInv = 1 / this.airSpeed;
     // reference is 6 dB for natural inverse square law
-    const gainExponent = -utils.dBToLin(this.distanceSpread / 6);
+    const gainExponent = -this.distanceSpread / 6;
 
     let ongoing = true;
     let diffusionsNb = 0;
