@@ -250,12 +250,14 @@ class WoodlandServerPerformance extends serverSide.Performance {
 
   flatnessesCompleted() {
     clearTimeout(this.flatnessesTimeoutID);
-    this.flatnesses.sort();
-    const source = this.flatnesses[this.flatnesses.length - 1][1];
-    this.flatnessesExpected = 0; // completed
-    this.setReceiver(source);
+    if(this.flatnesses.length > 0) {
+      this.flatnesses.sort();
+      const source = this.flatnesses[this.flatnesses.length - 1][1];
+      this.flatnessesExpected = 0; // completed
+      this.setReceiver(source);
 
-    this.propagate(source.modules.checkin.index);
+      this.propagate(source.modules.checkin.index);
+    }
   }
 
   propagationsCompleted() {

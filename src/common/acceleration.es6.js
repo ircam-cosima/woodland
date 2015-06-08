@@ -5,7 +5,7 @@ var platform = require('platform');
 let acceleration = {};
 
 acceleration.Acceleration = class {
-  constructor() {
+  constructor(params = {}) {
     this.callbacks = [];
     this.iOS = platform.os.family === 'iOS';
 
@@ -14,6 +14,13 @@ acceleration.Acceleration = class {
     this.acceleration = {x: 0, y: 0, z: 0};
 
     this._listener = this._listener.bind(this);
+
+    const start = (typeof params.start !== 'undefined'
+                   ? params.start
+                   : true);
+    if(start) {
+      this.start();
+    }
   }
 
   // unifying proxy
@@ -35,16 +42,15 @@ acceleration.Acceleration = class {
 
     }
     for(let c of this.callbacks) {
-      c(this.acceleration, this.interval);
+      if(typeof c !== 'undefined') {
+        c(this.acceleration, this.interval);
+      }
     }
   }
 
   addListener(callback) {
     if(this.callbacks.indexOf(callback) === -1) {
       this.callbacks.push(callback);
-    }
-    if(this.callbacks.length === 1) {
-      window.addEventListener('devicemotion', this._listener, false);
     }
   }
 
@@ -53,11 +59,15 @@ acceleration.Acceleration = class {
     if(index !== -1) {
       this.callbacks.splice(index, 1);
     }
-    if(this.callbacks.length === 1) {
-      window.removeEventListener('devicemotion', this._listener, false);
-    }
   }
 
+  start() {
+    window.addEventListener('devicemotion', this._listener, false);
+  }
+
+  stop() {
+    window.removeEventListener('devicemotion', this._listener, false);
+  }
 };
 
 module.exports = exports = acceleration;
