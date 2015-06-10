@@ -235,7 +235,7 @@ dom.DelayThreshold = class {
       DOMClass: 'input-control',
       text: '=3',
       setter: () => {
-        that.setter(10);
+        that.setter(3);
         that.input.update();
       }
     } );
