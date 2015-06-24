@@ -83,6 +83,22 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
 
     this.propagation = new app.audio.Propagation({gain: -this.compensation.gain});
 
+    this.analysis = new app.audio.Analysis( {
+      analyser: {
+        fftSize: 256,
+        minDecibels: -100,
+        maxDecibels: -50,
+        smoothingTimeConstant: 0.2
+      },
+      sources: [
+        this.shaker.masterGain,
+        this.propagation.masterGain
+      ],
+      minFrequency: 100,
+      maxFrequency: 8000
+    } );
+    this.audioVisualisationElement = undefined;
+
     this.audioFiles = [];
     this.audioBuffers = [];
 
@@ -165,6 +181,7 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
 
     this.distances = null;
 
+    this.audioVisualisation = this.audioVisualisation.bind(this);
     this.flatnessHandler = this.flatnessHandler.bind(this);
     this.launcherHandler = this.launcherHandler.bind(this);
   }
@@ -181,8 +198,19 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
         coordinates: that.setup.coordinates
       } );
 
+    this.audioVisualisationElement = document.getElementById('performance');
+    requestAnimationFrame(this.audioVisualisation);
     this.calibration.load();
     this.display.label.update();
+  }
+
+  audioVisualisation() {
+    if(typeof this.audioVisualisationElement !== 'undefined') {
+      const amplitude = this.analysis.getAmplitude();
+      this.audioVisualisationElement.style['background-color']
+        = 'rgb(' + amplitude + ',' + amplitude + ',' + amplitude + ')';
+    }
+    requestAnimationFrame(this.audioVisualisation);
   }
 
   launcherHandler(event) {

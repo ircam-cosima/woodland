@@ -188,5 +188,55 @@ audio.Propagation = class {
 
 };
 
+audio.Analysis = class {
+  constructor(params = {}) {
+    this.analyser = audio.context.createAnalyser();
+
+    if(typeof params.analyser !== 'undefined') {
+      for(let a in params.analyser) {
+        if(params.analyser.hasOwnProperty(a) ) {
+          this.analyser[a] = params.analyser[a];
+        }
+      }
+    }
+
+    this.minBin = (typeof params.minFrequency !== 'undefined'
+                   ? Math.max(0,
+                              Math.min(this.analyser.frequencyBinCount,
+                                       Math.round(params.minFrequency * this.analyser.fftSize
+                                                  / audio.context.sampleRate) ) )
+                   : 0);
+
+    this.maxBin = (typeof params.maxFrequency !== 'undefined'
+                   ? Math.max(0,
+                              Math.min(this.analyser.frequencyBinCount,
+                                       Math.round(params.maxFrequency * this.analyser.fftSize
+                                                  / audio.context.sampleRate) ) )
+                   : 0);
+
+    if(typeof params.sources !== 'undefined') {
+      for(let s of params.sources) {
+        s.connect(this.analyser);
+      }
+    }
+
+    this.magnitudes = new Uint8Array(this.analyser.frequencyBinCount);
+  }
+
+  // return amplitude in [0-255]
+  getAmplitude() {
+    this.analyser.getByteFrequencyData(this.magnitudes);
+
+    let amplitude = 0;
+    for(let i = this.minBin; i <= this.maxBin; ++i) {
+      amplitude += this.magnitudes[i];
+    }
+    amplitude /= this.maxBin - this.minBin + 1;
+
+    return Math.round(amplitude);
+  }
+
+};
+
 
 module.exports = exports = audio;
