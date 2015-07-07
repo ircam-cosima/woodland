@@ -65,8 +65,10 @@ class CalibrationServerPerformance extends serverSide.Performance {
     const params = this.getServerParameters();
 
     if(typeof client === 'undefined') {
+      debug('broadcast server parameters');
       this.server.broadcast('calibration', name, params);
     } else {
+      debug('send sever parameters to client');
       client.send(name, params);
     }
   }
@@ -128,8 +130,6 @@ class CalibrationServerPerformance extends serverSide.Performance {
       }
 
     }
-
-    this.emitServerParameters();
   }
 
   clickEmit(nextClick) {

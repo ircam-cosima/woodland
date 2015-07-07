@@ -6,8 +6,7 @@ const debug = require('debug')('soundworks:woodland');
 // Soundworks library
 const serverSide = require('soundworks/server');
 
-const distances = require('../common/distances');
-const utils = require('../common/utils');
+const processes = require('./processes');
 const files = require('../common/files');
 
 class WoodlandServerPerformance extends serverSide.Performance {
@@ -22,6 +21,29 @@ class WoodlandServerPerformance extends serverSide.Performance {
                  : new serverSide.Sync() );
 
     this.setup = params.setup;
+
+    this.processes = {};
+    this.processes.manager = new processes.Manager(process);
+
+    this.processes.propagation = this.processes.manager.fork('process_propagation');
+    this.processes.propagation.on('message', (m) => {
+      switch(m.type) {
+        case 'coordinates-request':
+          this.processes.propagation.send( {
+            type: 'coordinates',
+            data: { coordinates: this.setup.coordinates }
+          } );
+          break;
+
+        case 'parameters-request':
+          this.sendParameters();
+          break;
+
+        case 'computed':
+          this.distribute(m.data.destinations);
+          break;
+      }
+    } );
 
     this.players = [];
     this.receiver = null;
@@ -38,10 +60,6 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.propagationsTimeoutID = 0;
 
     // TODO: add low-pass filters
-
-    this.distances = new distances.Distances( {
-      coordinates: this.setup.coordinates
-    } );
 
     this.lookahead = 1; // second
     this.active = true;
@@ -90,10 +108,10 @@ class WoodlandServerPerformance extends serverSide.Performance {
     });
 
     client.receive('woodland:launcher', (label) => {
-      const client = this.clients.find( (e) => {
+      const launcher = this.clients.find( (e) => {
         return e.modules.checkin.label === label;
       } );
-      this.setLauncher(client);
+      this.setLauncher(launcher);
     });
 
     this.sendLabels();
@@ -246,6 +264,7 @@ class WoodlandServerPerformance extends serverSide.Performance {
 
     this.server.broadcast('player', 'woodland:parameters', params);
     this.server.broadcast('druid', 'woodland:parameters', params);
+    this.processes.propagation.send( {type: 'parameters', data: params} );
   }
 
   flatnessesCompleted() {
@@ -268,81 +287,14 @@ class WoodlandServerPerformance extends serverSide.Performance {
   }
 
   propagate(origin) {
-    let sources = []; // [distance, gain, delay]
-    let destinations = []; // [distance, gain, delay]
-    const positionsNb = this.distances.coordinates.length;
-    for(let d = 0; d < positionsNb; ++d) {
-      destinations[d] = [];
-      sources[d] = [];
-    }
+    const that = this;
+    this.processes.propagation.send({
+      type: 'compute',
+      data: { players: that.players, origin: origin}
+    } );
+  }
 
-    sources[origin].push([0, 1, 0]);
-
-    const linearGainThreshold = utils.dBToLin(this.gainThreshold);
-    const airSpeedInv = 1 / this.airSpeed;
-    // reference is 6 dB for natural inverse square law
-    const gainExponent = -this.distanceSpread / 6;
-
-    let ongoing = true;
-    let diffusionsNb = 0;
-    let diffusionsNbDisplay = 1;
-    const diffusionsNbMax = 1e6;
-    // Yes, we may hard-brake
-    ongoingReflections: // eslint-disable-line
-    while(ongoing) {
-    ongoing = false;
-      // debug('diffusions: %s', diffusionsNb);
-      for(let s of this.players) {
-        // debug('s: %s', s);
-        for(let source = sources[s].shift(); // loudest first
-            source !== undefined;
-            source = sources[s].pop() ) {
-          // debug('pop %s: %s', s, source);
-          for(let d of this.players) {
-            // debug('d: %s', d);
-            if(s === d) {
-              if(destinations[d].length < diffusionsNbMax) {
-                destinations[d].push(source);
-                // debug('destination push: %s', source);
-                ++diffusionsNb;
-                if(diffusionsNb > diffusionsNbDisplay) {
-                  debug('diffusions2: %s', diffusionsNb);
-                  diffusionsNbDisplay *= 2;
-                }
-                ongoing = true;
-              }
-              else {
-                debug('destinations[%s].length ≥ %s', d, diffusionsNbMax);
-                ongoing = false;
-                break ongoingReflections; // eslint-disable-line
-              }
-              // debug('destination %s', d);
-            } else {
-              // use global distance, because of clipping for gain
-              const distance = this.distances.get(s, d) + source[0];
-              const distanceClipped = Math.max(1, distance);
-              // const distanceClippedInv = 1 / Math.max(1, distance);
-              const gain = source[1]
-                      * this.reflectionTransmission
-                      * Math.pow(distanceClipped, gainExponent);
-              const delay = airSpeedInv * distance;
-              if(gain > linearGainThreshold && delay < this.delayThreshold) {
-                if(sources[d].length < diffusionsNbMax) {
-                  sources[d].push([distance, gain, delay]);
-                  // debug('source push %s: [%s, %s, %s]', d, distance, gain, delay);
-                  ongoing = true;
-                } else {
-                  ongoing = false;
-                  debug('sources[%s].length ≥ %s', d, diffusionsNbMax);
-                  break ongoingReflections; // eslint-disable-line
-                }
-              }
-            }
-          } // for all potential destinations
-        } // for all existing sources
-      } // for all potential sources
-    } // while ongoing
-
+  distribute(destinations) {
     this.propagations = 0;
     this.propagationsExpected = this.players.length;
     for(let c = 0; c < this.clients.length; ++c) {
@@ -355,9 +307,6 @@ class WoodlandServerPerformance extends serverSide.Performance {
                     destinations[client.modules.checkin.index] );
       }
     }
-
-
-
   }
 
 } // class WoodlandServerPerformance

@@ -162,14 +162,18 @@ audio.Propagation = class {
       sampleRate);
 
     const data = this.propagationBuffer.getChannelData(0);
+    debug('setting sources');
     for(let s = 0; s < sources.length; ++s) {
       data[Math.floor(sources[s][2] * sampleRate)] = sources[s][1];
     }
+    debug('sources set');
 
   }
 
   setSound(buffer) {
-    this.convolver.buffer = buffer;
+    if(buffer !== this.convolver.buffer) {
+      this.convolver.buffer = buffer;
+    }
   }
 
 

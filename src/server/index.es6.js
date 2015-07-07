@@ -55,7 +55,7 @@ try {
 }
 
 
-const checkin = new serverSide.Checkin({setup: setup, order: 'random'});
+const checkin = new serverSide.Checkin({setup: setup, order: order});
 
 const calibration = new serverSide.Calibration( {
   persistent: {
