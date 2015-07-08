@@ -9,7 +9,7 @@ app.clientSide = require('soundworks/client');
 app.client = app.clientSide.client;
 
 app.audio = require('./audio');
-app.dom = require('../common/dom');
+app.dom = require('./dom');
 app.input = require('../common/acceleration');
 app.distances = require('../common/distances');
 app.files = require('../common/files');
@@ -31,6 +31,12 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
     this.checkin = checkin;
 
     this.display = {};
+
+    this.display.background = new app.dom.Canvas( {
+      DOMOrigin: that.view,
+      DOMClass: 'background'
+    } );
+
     this.display.label = new app.dom.Text( {
       DOMOrigin: that.view,
       DOMClass: 'label',
@@ -85,7 +91,7 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
 
     this.analysis = new app.audio.Analysis( {
       analyser: {
-        fftSize: 256,
+        fftSize: 128,
         minDecibels: -100,
         maxDecibels: -50,
         smoothingTimeConstant: 0.2
@@ -94,10 +100,9 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
         this.shaker.masterGain,
         this.propagation.masterGain
       ],
-      minFrequency: 100,
+      minFrequency: 200, // avoid first FFT bin
       maxFrequency: 8000
     } );
-    this.audioVisualisationElement = undefined;
 
     this.audioFiles = [];
     this.audioBuffers = [];
@@ -198,18 +203,16 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
         coordinates: that.setup.coordinates
       } );
 
-    this.audioVisualisationElement = document.getElementById('performance');
-    requestAnimationFrame(this.audioVisualisation);
     this.calibration.load();
     this.display.label.update();
+
+    this.display.background.resize();
+    requestAnimationFrame(this.audioVisualisation);
   }
 
   audioVisualisation() {
-    if(typeof this.audioVisualisationElement !== 'undefined') {
-      const amplitude = this.analysis.getAmplitude();
-      this.audioVisualisationElement.style['background-color']
-        = 'rgb(' + amplitude + ',' + amplitude + ',' + amplitude + ')';
-    }
+    const amplitude = this.analysis.getAmplitude();
+    this.display.background.fillRGB([ amplitude, amplitude, amplitude]);
     requestAnimationFrame(this.audioVisualisation);
   }
 

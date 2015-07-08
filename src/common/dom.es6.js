@@ -64,7 +64,7 @@ dom.Button = class {
 };
 
 dom.Toggle = class extends dom.Button {
-  constructor(params) {
+  constructor(params = {}) {
     super(params);
     this.getter = params.getter; // undefined is fine
 
@@ -91,7 +91,7 @@ dom.Toggle = class extends dom.Button {
 };
 
 dom.Input = class {
-  constructor(params) {
+  constructor(params = {}) {
     this.setter = params.setter; // undefined is fine
     this.getter = params.getter; // undefined is fine
 
@@ -127,7 +127,7 @@ dom.Input = class {
 };
 
 dom.Select = class {
-  constructor(params) {
+  constructor(params = {}) {
     this.setter = params.setter; // undefined is fine
     this.getter = params.getter; // undefined is fine
 
@@ -170,7 +170,7 @@ dom.Select = class {
 };
 
 dom.ExclusiveToggles = class {
-  constructor(params) {
+  constructor(params = {}) {
     this.setter = params.setter; // undefined is fine
     this.getter = params.getter; // undefined is fine
 

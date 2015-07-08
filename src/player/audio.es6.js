@@ -176,17 +176,16 @@ audio.Propagation = class {
     }
   }
 
-
   render(time, callback) {
     if(this.propagationBuffer !== null) {
       const propagation = audio.context.createBufferSource();
       propagation.buffer = this.propagationBuffer;
       propagation.connect(this.convolver);
 
+      propagation.start(time);
       if(typeof callback !== 'undefined') {
         propagation.onended = callback;
       }
-      propagation.start(time);
     }
   }
 
@@ -212,32 +211,58 @@ audio.Analysis = class {
                    : 0);
 
     this.maxBin = (typeof params.maxFrequency !== 'undefined'
-                   ? Math.max(0,
-                              Math.min(this.analyser.frequencyBinCount,
+                   ? Math.max(this.minBin,
+                              Math.min(this.analyser.frequencyBinCount - 1,
                                        Math.round(params.maxFrequency * this.analyser.fftSize
                                                   / audio.context.sampleRate) ) )
-                   : 0);
+                   : this.analyser.frequencyBinCount - 1);
 
-    if(typeof params.sources !== 'undefined') {
-      for(let s of params.sources) {
+    this.binsNormalisation = 1 / (this.maxBin - this.minBin + 1);
+
+    // pre-allocation
+    this.magnitudes = new Uint8Array(this.analyser.frequencyBinCount);
+
+    this.sourcesOld = undefined;
+    this.connect(params);
+  }
+
+  connect(params = {}) {
+    this.disconnect();
+    this.sources = params.sources;
+
+    if(typeof this.sources !== 'undefined') {
+      for(let s of this.sources) {
         s.connect(this.analyser);
       }
     }
-
-    this.magnitudes = new Uint8Array(this.analyser.frequencyBinCount);
   }
 
-  // return amplitude in [0-255]
-  getAmplitude() {
-    this.analyser.getByteFrequencyData(this.magnitudes);
-
-    let amplitude = 0;
-    for(let i = this.minBin; i <= this.maxBin; ++i) {
-      amplitude += this.magnitudes[i];
+  disconnect() {
+    if(typeof this.sources !== 'undefined') {
+      for(let s of this.sources) {
+        s.disconnect(this.analyser);
+      }
     }
-    amplitude /= this.maxBin - this.minBin + 1;
+    this.sourcesOld = this.sources;
+    this.sources = undefined;
+  }
 
-    return Math.round(amplitude);
+  reconnect() {
+    this.connect({ sources: this.sourcesOld });
+  }
+
+  getAmplitude() {
+    let amplitude = 0;
+    if(typeof this.sources !== 'undefined') {
+      this.analyser.getByteFrequencyData(this.magnitudes);
+
+      for(let i = this.minBin; i <= this.maxBin; ++i) {
+        amplitude += this.magnitudes[i];
+      }
+      amplitude *= this.binsNormalisation;
+    }
+
+    return Math.floor(amplitude);
   }
 
 };
