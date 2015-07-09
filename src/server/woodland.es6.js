@@ -8,6 +8,7 @@ const serverSide = require('soundworks/server');
 
 const processes = require('./processes');
 const files = require('../common/files');
+const Propagation = require('./propagation');
 
 class WoodlandServerPerformance extends serverSide.Performance {
   constructor(params = {}) {
@@ -25,25 +26,27 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.processes = {};
     this.processes.manager = new processes.Manager(process);
 
-    this.processes.propagation = this.processes.manager.fork('process_propagation');
-    this.processes.propagation.on('message', (m) => {
-      switch(m.type) {
-        case 'coordinates-request':
-          this.processes.propagation.send( {
-            type: 'coordinates',
-            data: { coordinates: this.setup.coordinates }
-          } );
-          break;
+    this.propagation = new Propagation({ coordinates: this.setup.coordinates });
 
-        case 'parameters-request':
-          this.sendParameters();
-          break;
+    // this.processes.propagation = this.processes.manager.fork('process_propagation');
+    // this.processes.propagation.on('message', (m) => {
+    //   switch(m.type) {
+    //     case 'coordinates-request':
+    //       this.processes.propagation.send( {
+    //         type: 'coordinates',
+    //         data: { coordinates: this.setup.coordinates }
+    //       } );
+    //       break;
 
-        case 'computed':
-          this.distribute(m.data.destinations);
-          break;
-      }
-    } );
+    //     case 'parameters-request':
+    //       this.sendParameters();
+    //       break;
+
+    //     case 'computed':
+    //       this.distribute(m.data.destinations);
+    //       break;
+    //   }
+    // } );
 
     this.players = [];
     this.receiver = null;
@@ -264,7 +267,9 @@ class WoodlandServerPerformance extends serverSide.Performance {
 
     this.server.broadcast('player', 'woodland:parameters', params);
     this.server.broadcast('druid', 'woodland:parameters', params);
-    this.processes.propagation.send( {type: 'parameters', data: params} );
+
+    this.propagation.setParameters(params);
+    // this.processes.propagation.send( {type: 'parameters', data: params} );
   }
 
   flatnessesCompleted() {
@@ -288,10 +293,15 @@ class WoodlandServerPerformance extends serverSide.Performance {
 
   propagate(origin) {
     const that = this;
-    this.processes.propagation.send({
-      type: 'compute',
-      data: { players: that.players, origin: origin}
-    } );
+
+    this.distribute(
+      this.propagation.compute( { players: that.players, origin: origin} )
+    );
+
+    // this.processes.propagation.send({
+    //   type: 'compute',
+    //   data: { players: that.players, origin: origin}
+    // } );
   }
 
   distribute(destinations) {
