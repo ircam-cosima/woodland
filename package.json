@@ -4,7 +4,7 @@
     "Jean-Philippe.Lambert@ircam.fr"
   ],
   "description": "Discreet sound-field experience",
-  "version": "0.4.2",
+  "version": "0.5.1",
   "scripts": {
     "start": "node --harmony src/server/index.js"
   },
