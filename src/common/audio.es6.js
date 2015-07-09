@@ -6,6 +6,26 @@ let audio = {};
 
 audio.context = require('soundworks/client').audioContext;
 
+audio.cloneBuffer = function(original) {
+  const copy = audio.context.createBuffer(
+    original.numberOfChannels,
+    Math.round(original.duration * original.sampleRate),
+    original.sampleRate);
+
+  for(let c = 0; c < original.numberOfChannels; ++c) {
+    const copyData = copy.getChannelData(c);
+    copyData.set(original.getChannelData(c) );
+  }
+  return copy;
+};
+
+audio.playBuffer = function (buffer) {
+  const source = audio.context.createBufferSource();
+  source.buffer = buffer;
+  source.connect(audio.context.destination);
+  source.start(0);
+};
+
 audio.generateDiracBuffer = function () {
   const length = 1;
   const channels = 1;
