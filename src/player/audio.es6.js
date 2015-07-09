@@ -33,7 +33,7 @@ audio.ShakerSynth = class {
     this.lowpass.connect(this.highpass);
 
     this.masterGain = audio.context.createGain();
-    this.masterGain.value = utils.dBToLin(gain);
+    this.masterGainSet(gain);
 
     this.highpass.connect(this.masterGain);
 
@@ -135,7 +135,7 @@ audio.Propagation = class {
     this.convolver.buffer = audio.generateClackBuffer(); // source sound
 
     this.masterGain = audio.context.createGain();
-    this.masterGain.gain.value = utils.dBToLin(gain);
+    this.masterGainSet(gain);
 
     this.convolver.connect(this.masterGain);
 
@@ -193,7 +193,13 @@ audio.Propagation = class {
 
 audio.Analysis = class {
   constructor(params = {}) {
+    this.masterGain = audio.context.createGain();
+    this.masterGain.gain.value = (typeof params.gain !== 'undefined'
+                             ? utils.dBToLin(params.gain)
+                             : 1);
+
     this.analyser = audio.context.createAnalyser();
+    this.masterGain.connect(this.analyser);
 
     if(typeof params.analyser !== 'undefined') {
       for(let a in params.analyser) {
@@ -232,7 +238,7 @@ audio.Analysis = class {
 
     if(typeof this.sources !== 'undefined') {
       for(let s of this.sources) {
-        s.connect(this.analyser);
+        s.connect(this.masterGain);
       }
     }
   }
@@ -240,7 +246,7 @@ audio.Analysis = class {
   disconnect() {
     if(typeof this.sources !== 'undefined') {
       for(let s of this.sources) {
-        s.disconnect(this.analyser);
+        s.disconnect(this.masterGain);
       }
     }
     this.sourcesOld = this.sources;

@@ -90,6 +90,8 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
     this.propagation = new app.audio.Propagation({gain: -this.compensation.gain});
 
     this.analysis = new app.audio.Analysis( {
+      // to compensate compensation, and boost
+      gain: 6 + this.compensation.gain,
       analyser: {
         fftSize: 128,
         minDecibels: -100,
