@@ -9,6 +9,7 @@
     "start": "node --harmony src/server/index.js"
   },
   "dependencies": {
+    "blocked": "^1.1.0",
     "debug": "^2.1.2",
     "ejs": "^2.3.1",
     "express": "^4.8.6",
