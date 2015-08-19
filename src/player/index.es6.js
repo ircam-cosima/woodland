@@ -170,9 +170,23 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
       this.acceleration.addListener(this.flatnessHandler);
     });
 
-    app.client.receive('woodland:propagate', (sources) => {
+    app.client.receive('woodland:sources-init', () => {
+      app.debug('sources init');
       this.display.status.update('propagating');
-      this.propagation.set(sources);
+      this.propagation.sourcesInit();
+    } );
+
+    app.client.receive('woodland:sources-add', (sources) => {
+      app.debug('sources add');
+      this.display.status.update('propagating: more');
+      this.propagation.sourcesAdd(sources);
+    } );
+
+    app.client.receive('woodland:sources-apply', () => {
+      app.debug('sources apply');
+      this.display.status.update('propagating: computing');
+      this.propagation.sourcesApply();
+      app.debug('propagated');
       app.client.send('woodland:propagated');
       this.display.status.update('propagated');
     } );

@@ -13,6 +13,7 @@ const Propagation = require('./propagation');
 class WoodlandServerPerformance extends serverSide.Performance {
   constructor(params = {}) {
     super();
+    const that = this;
     this.server = (typeof params.server !== 'undefined'
                    ? params.server
                    : serverSide.server);
@@ -26,27 +27,36 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.processes = {};
     this.processes.manager = new processes.Manager(process);
 
-    this.propagation = new Propagation({ coordinates: this.setup.coordinates });
+    this.processes.propagation = this.processes.manager.fork('process_propagation');
+    this.processes.propagation.on('message', (m) => {
+      switch(m.type) {
+        case 'coordinates-request':
+          this.processes.propagation.send( {
+            type: 'coordinates',
+            data: { coordinates: that.setup.coordinates }
+          } );
+          break;
 
-    // this.processes.propagation = this.processes.manager.fork('process_propagation');
-    // this.processes.propagation.on('message', (m) => {
-    //   switch(m.type) {
-    //     case 'coordinates-request':
-    //       this.processes.propagation.send( {
-    //         type: 'coordinates',
-    //         data: { coordinates: this.setup.coordinates }
-    //       } );
-    //       break;
+        case 'clients-request':
+          this.processes.propagation.send( {
+            type: 'clients',
+            data: { clients: that.setup.coordinates }
+          } );
+          break;
 
-    //     case 'parameters-request':
-    //       this.sendParameters();
-    //       break;
+        case 'parameters-request':
+          this.sendParameters();
+          break;
 
-    //     case 'computed':
-    //       this.distribute(m.data.destinations);
-    //       break;
-    //   }
-    // } );
+        case 'destinations':
+          this.sendDestinations(m.id, m.destinations);
+          break;
+
+        case 'computed':
+          this.sendDestinationsDone();
+          break;
+      }
+    } );
 
     this.players = [];
     this.receiver = null;
@@ -56,6 +66,8 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.flatnessesExpected = 0; // when request is made
     this.flatnessesTimeoutDuration = 5; // seconds
     this.flatnessesTimeoutID = 0;
+
+    this.sendDestinationsOngoing = 0;
 
     this.propagations = 0;
     this.propagationsExpected = 0; // when request is made
@@ -268,8 +280,7 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.server.broadcast('player', 'woodland:parameters', params);
     this.server.broadcast('druid', 'woodland:parameters', params);
 
-    this.propagation.setParameters(params);
-    // this.processes.propagation.send( {type: 'parameters', data: params} );
+    this.processes.propagation.send( {type: 'parameters', data: params} );
   }
 
   flatnessesCompleted() {
@@ -294,28 +305,56 @@ class WoodlandServerPerformance extends serverSide.Performance {
   propagate(origin) {
     const that = this;
 
-    this.distribute(
-      this.propagation.compute( { players: that.players, origin: origin} )
-    );
-
-    // this.processes.propagation.send({
-    //   type: 'compute',
-    //   data: { players: that.players, origin: origin}
-    // } );
-  }
-
-  distribute(destinations) {
-    this.propagations = 0;
-    this.propagationsExpected = this.players.length;
+    debug('sources-init');
     for(let c = 0; c < this.clients.length; ++c) {
       const client = this.clients[c];
       if(client.type === 'player') {
-        debug('woodland:propagate %s reflections to %s',
-              destinations[client.modules.checkin.index].length,
-              client.modules.checkin.label);
-        client.send('woodland:propagate',
-                    destinations[client.modules.checkin.index] );
+        client.send('woodland:sources-init');
       }
+    }
+
+    debug('compute');
+    this.processes.propagation.send( {
+      type: 'compute',
+      data: { players: that.players,
+              origin: origin }
+    } );
+  }
+
+  sendDestinations(destinationId, destinations) {
+    ++this.sendDestinationsOngoing;
+    // more relaxed than setImmediate
+    setTimeout( () => {
+      const client = this.clients.find( (e) => {
+        return e.modules.checkin.index === destinationId;
+      } );
+
+      if(typeof client !== 'undefined' && client.type === 'player') {
+        // debug('propagate %s reflections to %s',
+        //       destinations.length, client.modules.checkin.label);
+        client.send('woodland:sources-add', destinations);
+        --this.sendDestinationsOngoing;
+      }
+    }, 0);
+  }
+
+  sendDestinationsDone() {
+    if(this.sendDestinationsOngoing === 0) {
+      this.propagations = 0;
+      this.propagationsExpected = this.players.length;
+      debug('sources-apply');
+      for(let c = 0; c < this.clients.length; ++c) {
+        const client = this.clients[c];
+        if(client.type === 'player') {
+          // more relaxed than setImmediate
+          setTimeout( () => {
+            client.send('woodland:sources-apply');
+          }, 0);
+        }
+      }
+    } else {
+      // wait until completion, no pressure
+      setTimeout( () => { this.sendDestinationsDone(); }, 10);
     }
   }
 

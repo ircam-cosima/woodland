@@ -1,7 +1,7 @@
 'use strict';
 
 const debug = require('debug')('soundworks:woodland');
-var blocked = require('blocked');
+const blocked = require('blocked');
 blocked(function(ms) {
   debug('--------------------------------------------- blocked for %s ms', ms);
 } );

@@ -140,34 +140,43 @@ audio.Propagation = class {
     this.convolver.connect(this.masterGain);
 
     this.masterGain.connect(audio.context.destination);
+
+    this.sourcesInit();
   }
 
   masterGainSet(masterGain) {
     this.masterGain.gain.value = utils.dBToLin(masterGain);
   }
 
-  set(sources) {
-    // [distance, gain, delay]
-    const maxDelay = sources.reduce( (max, element) => {
-      return element[2] > max ? element[2] : max;
-    }, 0);
+  sourcesInit() {
+    this.sources = [];
+    this.sourcesDelayMax = 0;
+  }
 
+  sourcesAdd(sources) {
+    for(let s = 0; s < sources.length; ++s) {
+      this.sources.push(sources[s]);
+      this.sourcesDelayMax = Math.max(this.sourcesDelayMax, sources[s][1]);
+    }
+  }
+
+  sourcesApply() {
     const sampleRate = audio.context.sampleRate;
 
     // single channel
     this.propagationBuffer = audio.context.createBuffer(
       1,
       Math.max(2, // iOS does not play a single-sample buffer
-               1 + Math.ceil(maxDelay * sampleRate)), // including last value
+               // including last value
+               1 + Math.ceil(this.sourcesDelayMax * sampleRate)),
       sampleRate);
 
     const data = this.propagationBuffer.getChannelData(0);
     debug('setting sources');
-    for(let s = 0; s < sources.length; ++s) {
-      data[Math.floor(sources[s][2] * sampleRate)] = sources[s][1];
+    for(let s = 0; s < this.sources.length; ++s) {
+      data[Math.floor(this.sources[s][1] * sampleRate)] = this.sources[s][0];
     }
     debug('sources set');
-
   }
 
   setSound(buffer) {

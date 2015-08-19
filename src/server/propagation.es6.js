@@ -10,6 +10,13 @@ class Propagation {
     this.distances = new distances.Distances( {
       coordinates: params.coordinates
     } );
+
+    this.sendFunction = params.sendFunction;
+
+    this.sources = []; // [distance, gain, delay]
+    this.destinations = []; // [gain, delay]
+    this.destinationsNb = [];
+
     this.setParameters(params);
   }
 
@@ -22,10 +29,11 @@ class Propagation {
                            : 30); // s
     this.airSpeed = (typeof params.airSpeed !== 'undefined'
                      ? params.airSpeed
-                     : 330); // m.s^-1
+                     : 330); // m/s
     this.distanceSpread = (typeof params.distanceSpread !== 'undefined'
                            ? params.distanceSpread
-                           : 6); // dB/m (reference at 1 m)
+                           : 6); // attenuation when distance doubles
+                                 // (dB/m with reference at 1 m)
     this.reflectionTransmission =
       (typeof params.reflectionTransmission !== 'undefined'
        ? params.reflectionTransmission
@@ -41,18 +49,18 @@ class Propagation {
       console.log('propagation error');
       console.log('players: %s', players);
       console.log('origin: %s', origin);
-      return [];
+      return;
     }
 
-    let sources = []; // [distance, gain, delay]
-    let destinations = []; // [distance, gain, delay]
-    const positionsNb = this.distances.coordinates.length;
-    for(let d = 0; d < positionsNb; ++d) {
-      destinations[d] = [];
-      sources[d] = [];
+    if(typeof params.origin !== 'undefined') {
+      const positionsNb = this.distances.coordinates.length;
+      for(let d = 0; d < positionsNb; ++d) {
+        this.destinations[d] = [];
+        this.destinationsNb[d] = 0;
+        this.sources[d] = [];
+      }
+      this.sources[origin].push([0, 1, 0]);
     }
-
-    sources[origin].push([0, 1, 0]);
 
     const linearGainThreshold = utils.dBToLin(this.gainThreshold);
     const airSpeedInv = 1 / this.airSpeed;
@@ -60,39 +68,45 @@ class Propagation {
     const gainExponent = -this.distanceSpread / 6;
 
     let ongoing = true;
-    let diffusionsNb = 0;
-    let diffusionsNbDisplay = 1;
-    const diffusionsNbMax = 1e5;
+    let destinationsNb = 0;
+    let destinationsNbDisplay = 1;
+    const destinationsNbTransmit = 1e4; // per destination
+    const destinationsNbMax = 1e6; // hard limit, per destination or source
+
     // Yes, we may hard-brake
     ongoingReflections: // eslint-disable-line
     while(ongoing) {
     ongoing = false;
-      // debug('diffusions: %s', diffusionsNb);
+      // sources
       for(let s of players) {
-        // debug('s: %s', s);
-        for(let source = sources[s].shift(); // loudest first
+        for(let source = this.sources[s].shift(); // loudest first
             source !== undefined;
-            source = sources[s].pop() ) {
-          // debug('pop %s: %s', s, source);
+            source = this.sources[s].pop() ) {
+
+          // destinations
           for(let d of players) {
-            // debug('d: %s', d);
             if(s === d) {
-              if(destinations[d].length < diffusionsNbMax) {
-                destinations[d].push(source);
-                // debug('destination push: %s', source);
-                ++diffusionsNb;
-                if(diffusionsNb > diffusionsNbDisplay) {
-                  debug('diffusions2: %s', diffusionsNb);
-                  diffusionsNbDisplay *= 2;
+              if(this.destinationsNb[d] < destinationsNbMax) {
+                this.destinations[d].push( [ source[1], source[2] ] );
+                ++this.destinationsNb[d];
+                if(this.destinations[d].length % destinationsNbTransmit === 0) {
+                  // debug('transmit %s to %s', this.destinations[d].length, d);
+                  this.sendFunction(d, this.destinations[d]);
+                  // new array, while the previous one is being sent
+                  this.destinations[d] = [];
+                }
+
+                ++destinationsNb;
+                if(destinationsNb > destinationsNbDisplay) {
+                  debug('destinations2: %s', destinationsNb);
+                  destinationsNbDisplay *= 2;
                 }
                 ongoing = true;
-              }
-              else {
-                debug('destinations[%s].length ≥ %s', d, diffusionsNbMax);
+              } else {
+                debug('destinations[%s].length ≥ %s', d, destinationsNbMax);
                 ongoing = false;
                 break ongoingReflections; // eslint-disable-line
               }
-              // debug('destination %s', d);
             } else {
               // use global distance, because of clipping for gain
               const distance = this.distances.get(s, d) + source[0];
@@ -103,13 +117,12 @@ class Propagation {
                       * Math.pow(distanceClipped, gainExponent);
               const delay = airSpeedInv * distance;
               if(gain > linearGainThreshold && delay < this.delayThreshold) {
-                if(sources[d].length < diffusionsNbMax) {
-                  sources[d].push([distance, gain, delay]);
-                  // debug('source push %s: [%s, %s, %s]', d, distance, gain, delay);
+                if(this.sources[d].length < destinationsNbMax) {
+                  this.sources[d].push([distance, gain, delay]);
                   ongoing = true;
                 } else {
                   ongoing = false;
-                  debug('sources[%s].length ≥ %s', d, diffusionsNbMax);
+                  debug('sources[%s].length ≥ %s', d, destinationsNbMax);
                   break ongoingReflections; // eslint-disable-line
                 }
               }
@@ -119,7 +132,16 @@ class Propagation {
       } // for all potential sources
     } // while ongoing
 
-    return destinations;
+    // send last destinations
+    debug('sending to last destinations');
+    for(let d of players) {
+      debug('sending: %s to %s (total %s)',
+            this.destinations[d].length, d, this.destinationsNb[d]);
+      this.sendFunction(d, this.destinations[d]);
+    }
+    debug('sent');
+
+    return;
   } // compute
 } // class Propagation
 
