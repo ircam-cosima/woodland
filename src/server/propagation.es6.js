@@ -71,7 +71,7 @@ class Propagation {
     let destinationsNb = 0;
     let destinationsNbDisplay = 1;
     const destinationsNbTransmit = 1e4; // per destination
-    const destinationsNbMax = 1e6; // hard limit, per destination or source
+    const destinationsNbMax = 1e5; // hard limit, per destination or source
 
     // Yes, we may hard-brake
     ongoingReflections: // eslint-disable-line
