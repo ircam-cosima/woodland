@@ -8,6 +8,12 @@ app.platform = require('platform');
 app.clientSide = require('soundworks/client');
 app.client = app.clientSide.client;
 
+app.utils = require('../common/utils');
+app.blocked = new app.utils.Blocked( (duration) => {
+  app.debug('---------------------------------------------- blocked for %s ms',
+            duration);
+}, 50);
+
 app.audio = require('./audio');
 app.dom = require('./dom');
 app.input = require('../common/acceleration');
@@ -17,6 +23,8 @@ app.files = require('../common/files');
 // Initialise the client with its type
 // ('player' clients connect via the root URL)
 app.client.init('player');
+
+app.workers = {};
 
 class WoodlandClientPerformance extends app.clientSide.Performance {
   /**
@@ -170,27 +178,6 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
       this.acceleration.addListener(this.flatnessHandler);
     });
 
-    app.client.receive('woodland:sources-init', () => {
-      app.debug('sources init');
-      this.display.status.update('propagating');
-      this.propagation.sourcesInit();
-    } );
-
-    app.client.receive('woodland:sources-add', (sources) => {
-      app.debug('sources add');
-      this.display.status.update('propagating: more');
-      this.propagation.sourcesAdd(sources);
-    } );
-
-    app.client.receive('woodland:sources-apply', () => {
-      app.debug('sources apply');
-      this.display.status.update('propagating: computing');
-      this.propagation.sourcesApply();
-      app.debug('propagated');
-      app.client.send('woodland:propagated');
-      this.display.status.update('propagated');
-    } );
-
     app.client.receive('woodland:render', (time) => {
       this.display.status.update('rendering');
       this.propagation.render(
@@ -213,11 +200,22 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
   start() {
     super.start();
     const that = this;
+
     app.debug('checkin', this.checkin.index, this.checkin.label,
               app.client.coordinates);
-      this.distances = new app.distances.Distances( {
-        coordinates: that.setup.coordinates
-      } );
+    this.distances = new app.distances.Distances( {
+      coordinates: that.setup.coordinates
+    } );
+    app.workers.propagation.postMessage( {
+      type: 'checkin',
+      checkin: that.checkin.index,
+      label: that.checkin.label
+    } );
+
+    app.workers.propagation.postMessage( {
+      type: 'audio-sample-rate',
+      data: app.audio.context.sampleRate
+    } );
 
     this.calibration.load();
     this.display.label.update();
@@ -268,6 +266,37 @@ app.init = function () {
   app.checkin = new app.clientSide.Checkin();
 
   app.performance = new WoodlandClientPerformance(app.setup, app.checkin);
+
+  app.workers.propagation = new Worker('javascripts/worker_propagation.js');
+  app.workers.propagation.debug
+    = require('debug')('soundworks:woodland:worker:propagation');
+  app.workers.propagation.onmessage = (m) => {
+    switch(m.data.type) {
+      case 'debug':
+        app.workers.propagation.debug(m.data.data);
+        break;
+
+      case 'sources-init':
+        app.workers.propagation.debug('sources-init');
+        app.performance.display.status.update('propagating: init');
+        break;
+
+      case 'sources-add':
+        app.workers.propagation.debug('sources-add');
+        app.performance.display.status.update('propagating: continuing');
+        break;
+
+      case 'sources-apply':
+        app.workers.propagation.debug('sources-apply');
+        app.performance.display.status.update('propagating: computing');
+        app.performance.propagation.sourcesApply(m.data.samples, m.data.sampleRate);
+        // app.performance.propagation.sourcesApply(m.data.sources, m.data.sourcesDelayMax);
+        app.workers.propagation.debug('propagated');
+        app.performance.display.status.update('propagated');
+        app.client.send('woodland:propagated');
+        break;
+    }
+  };
 
   // Start the scenario and link the modules
   app.client.start(

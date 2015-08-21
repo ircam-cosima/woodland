@@ -2,38 +2,49 @@
 
 const debug = require('debug')('soundworks:woodland:process:propagation');
 
+let players = [];
+let sockets = [];
+let labels = [];
+var io = require('socket.io')();
+io.on('connection', (socket) => {
+  debug('client connection to socket2');
+
+  socket.on('woodland:checkin', (data) => {
+    debug('checkin %s, label %s', data.checkin, data.label);
+    sockets[data.checkin] = socket;
+    labels[data.checkin] = data.label;
+  } );
+
+  // update socket on connections, and re-connections
+  socket.emit('woodland:checkin-request');
+} );
+// autonomous socket for process
+io.listen(8887);
+
 const Propagation = require('./propagation');
 let propagation;
 
-
-let players = [];
+function sendDestinationsInit() {
+  for(let p of players) {
+    if(typeof sockets[p] !== 'undefined') {
+      sockets[p].emit('woodland:sources-init');
+    }
+  }
+}
 
 let sendDestinationsOngoing = 0;
 function sendDestinations(destinationId, destinations) {
-  ++this.sendDestinationsOngoing;
-  // more relaxed than setImmediate
-  setTimeout( () => {
-    // debug('propagate %s reflections to %s',
-    //       destinations.length, destinationId);
-    process.send( {
-      type: 'destinations',
-      id: destinationId,
-      destinations: destinations
-    } );
-    --this.sendDestinationsOngoing;
-  }, 0);
+  if(typeof sockets[destinationId] !== 'undefined') {
+    sockets[destinationId].emit('woodland:sources-add', destinations);
+  }
 }
 
 function sendDestinationsDone() {
-  if(sendDestinationsOngoing === 0) {
-    debug('computed');
-    // more relaxed than setImmediate
-    setTimeout( () => {
-      process.send( { type: 'computed' } );
-    }, 0);
-  } else {
-    // wait until completion, no pressure
-    setTimeout( () => { this.sendDestinationsDone(); }, 10);
+  debug('done');
+  for(let p of players) {
+    if(typeof sockets[p] !== 'undefined') {
+      sockets[p].emit('woodland:sources-done');
+    }
   }
 }
 
@@ -58,6 +69,9 @@ process.on('message', (m) => {
       if(typeof m.data.players !== 'undefined') {
         players = m.data.players;
       }
+      debug('players: ' + JSON.stringify(players) );
+
+      sendDestinationsInit();
       const destinations = propagation.compute(m.data);
       sendDestinationsDone();
       break;

@@ -20,6 +20,15 @@ if (watchOthers && watchOthers.length) {
 }
 
 gulp.task('browserify', tasks, function() {
+  gulp.src(['src/**/worker_*.js', '!src/**/*.es6.js'])
+    .pipe(transform(function(filename) {
+      return browserify(filename).bundle();
+    }))
+    .pipe(rename(function(path) {
+      path.dirname = "";
+    }))
+    .pipe(gulp.dest('public/javascripts'));
+
   return gulp.src(['src/**/index.js', '!src/server/index.js'])
     .pipe(transform(function(filename) {
       return browserify(filename).bundle();

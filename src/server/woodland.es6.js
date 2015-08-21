@@ -47,14 +47,6 @@ class WoodlandServerPerformance extends serverSide.Performance {
         case 'parameters-request':
           this.sendParameters();
           break;
-
-        case 'destinations':
-          this.sendDestinations(m.id, m.destinations);
-          break;
-
-        case 'computed':
-          this.sendDestinationsDone();
-          break;
       }
     } );
 
@@ -66,8 +58,6 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.flatnessesExpected = 0; // when request is made
     this.flatnessesTimeoutDuration = 5; // seconds
     this.flatnessesTimeoutID = 0;
-
-    this.sendDestinationsOngoing = 0;
 
     this.propagations = 0;
     this.propagationsExpected = 0; // when request is made
@@ -305,13 +295,8 @@ class WoodlandServerPerformance extends serverSide.Performance {
   propagate(origin) {
     const that = this;
 
-    debug('sources-init');
-    for(let c = 0; c < this.clients.length; ++c) {
-      const client = this.clients[c];
-      if(client.type === 'player') {
-        client.send('woodland:sources-init');
-      }
-    }
+    this.propagations = 0;
+    this.propagationsExpected = this.players.length;
 
     debug('compute');
     this.processes.propagation.send( {
@@ -319,43 +304,6 @@ class WoodlandServerPerformance extends serverSide.Performance {
       data: { players: that.players,
               origin: origin }
     } );
-  }
-
-  sendDestinations(destinationId, destinations) {
-    ++this.sendDestinationsOngoing;
-    // more relaxed than setImmediate
-    setTimeout( () => {
-      const client = this.clients.find( (e) => {
-        return e.modules.checkin.index === destinationId;
-      } );
-
-      if(typeof client !== 'undefined' && client.type === 'player') {
-        // debug('propagate %s reflections to %s',
-        //       destinations.length, client.modules.checkin.label);
-        client.send('woodland:sources-add', destinations);
-        --this.sendDestinationsOngoing;
-      }
-    }, 0);
-  }
-
-  sendDestinationsDone() {
-    if(this.sendDestinationsOngoing === 0) {
-      this.propagations = 0;
-      this.propagationsExpected = this.players.length;
-      debug('sources-apply');
-      for(let c = 0; c < this.clients.length; ++c) {
-        const client = this.clients[c];
-        if(client.type === 'player') {
-          // more relaxed than setImmediate
-          setTimeout( () => {
-            client.send('woodland:sources-apply');
-          }, 0);
-        }
-      }
-    } else {
-      // wait until completion, no pressure
-      setTimeout( () => { this.sendDestinationsDone(); }, 10);
-    }
   }
 
 } // class WoodlandServerPerformance

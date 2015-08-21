@@ -1,9 +1,10 @@
 'use strict';
 
 const debug = require('debug')('soundworks:woodland');
-const blocked = require('blocked');
-blocked(function(ms) {
-  debug('--------------------------------------------- blocked for %s ms', ms);
+const utils = require('../common/utils');
+const blocked = new utils.Blocked( (duration) => {
+  debug('---------------------------------------------- blocked for %s ms',
+        duration);
 } );
 
 // Express application

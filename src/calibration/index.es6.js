@@ -8,6 +8,12 @@ app.platform = require('platform');
 app.clientSide = require('soundworks/client');
 app.client = app.clientSide.client;
 
+app.utils = require('../common/utils');
+app.blocked = new app.utils.Blocked( (duration) => {
+  app.debug('---------------------------------------------- blocked for %s ms',
+            duration);
+}, 50);
+
 app.audio = require('./audio');
 app.dom = require('./dom');
 
