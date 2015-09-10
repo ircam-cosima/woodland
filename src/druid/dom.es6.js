@@ -545,7 +545,7 @@ dom.ReflectionTransmission = class {
     child = document.createElement('br');
     this.element.appendChild(child);
 
-    for(let v of [-0.01, -0.5, -0.1, -0.05]) {
+    for(let v of [-0.5, -0.1, -0.05, 0.01]) {
       child = new dom.Button( {
         DOMOrigin: this.element,
         DOMClass: 'input-control',
