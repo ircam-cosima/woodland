@@ -82,7 +82,8 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
         const calibration = that.calibration.get();
         that.compensation.delay = calibration.audio.delay;
         that.compensation.gain = calibration.audio.gain;
-        app.debug('compensation: %s', that.compensation);
+        app.debug('delay compensation: %s ms', 1000 * that.compensation.delay);
+        app.debug('gain compensation: %s dB', that.compensation.gain);
       }
     });
     this.sync = new app.clientSide.Sync();

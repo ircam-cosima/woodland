@@ -167,6 +167,20 @@ dom.Select = class {
     }
   }
 
+  setOptions(options) {
+    for (let option = this.element.options.length - 1; option >= 0; --option) {
+      this.element.options[option].remove();
+    }
+
+    for(let o of options) {
+      const option = document.createElement('option');
+      option.textContent = o;
+      this.element.add(option);
+    }
+
+    this.update();
+  }
+
 };
 
 dom.ExclusiveToggles = class {

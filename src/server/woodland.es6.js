@@ -1,6 +1,8 @@
 'use strict';
 
 // standard libraries
+const fs = require('fs');
+const path = require('path');
 const debug = require('debug')('soundworks:woodland');
 
 // Soundworks library
@@ -9,6 +11,8 @@ const serverSide = require('soundworks/server');
 const processes = require('./processes');
 const files = require('../common/files');
 const Propagation = require('./propagation');
+
+const dataPath =  path.join(__dirname, '../../data');
 
 class WoodlandServerPerformance extends serverSide.Performance {
   constructor(params = {}) {
@@ -75,8 +79,30 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.gainThreshold = -20; // dB
     this.delayThreshold = 30; // s
     this.airSpeed = 330; // m.s^-1
-    this.distanceSpread = 6; // dB/m (reference at 1 m)
-    this.reflectionTransmission = 0.7; // per reflection
+    this.distanceSpread = 6; // dB attenuation for double distance
+    this.reflectionTransmission = 0.7; // per reflection (factor)
+
+    this.druidPresetsFile = path.join(dataPath, 'druid_presets.json');
+
+    try {
+      this.druidPresets = JSON.parse(fs.readFileSync(this.druidPresetsFile) );
+    } catch(error) {
+      debug('Error loading druid presets from ' + this.druidPresetsFile + '. '
+            + error.message);
+      this.druidPresets = {
+        default: {
+          soundFile: this.soundFile,
+          masterGain: this.masterGain,
+          gainThreshold: this.gainThreshold,
+          delayThreshold: this.delayThreshold,
+          airSpeed: this.airSpeed,
+          distanceSpread: this.distanceSpread,
+          reflectionTransmission: this.reflectionTransmission,
+        },
+      };
+
+    }
+
   }
 
   enter(client) {
@@ -195,6 +221,19 @@ class WoodlandServerPerformance extends serverSide.Performance {
       this.sendParameters();
     } );
 
+    client.receive('woodland:druid-presets-request', () => {
+      this.sendDruidPresets();
+    });
+
+    client.receive('woodland:druid-presets', (presets) => {
+      this.druidPresets = presets;
+
+      fs.writeFile(this.druidPresetsFile, JSON.stringify(this.druidPresets) );
+
+      // re-broadcast
+      this.sendDruidPresets();
+    });
+
     client.receive('woodland:render-request', () => {
       this.server.broadcast('player', 'woodland:render',
                             this.sync.getSyncTime() + this.lookahead);
@@ -252,7 +291,16 @@ class WoodlandServerPerformance extends serverSide.Performance {
         labels.push(this.clients[c].modules.checkin.label);
       }
     }
-    labels.sort();
+
+    labels.sort( (a, b) => {
+      const aFloat = parseFloat(a);
+      const bFloat = parseFloat(b);
+      if(isNaN(aFloat) || isNaN(bFloat) ) {
+        return a > b;
+      } else {
+        return aFloat > bFloat;
+      }
+    });
     this.server.broadcast('druid', 'woodland:labels', labels);
   }
 
@@ -271,6 +319,10 @@ class WoodlandServerPerformance extends serverSide.Performance {
     this.server.broadcast('druid', 'woodland:parameters', params);
 
     this.processes.propagation.send( {type: 'parameters', data: params} );
+  }
+
+  sendDruidPresets() {
+    this.server.broadcast('druid', 'woodland:druid-presets', this.druidPresets);
   }
 
   flatnessesCompleted() {

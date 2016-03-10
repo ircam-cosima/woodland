@@ -36,10 +36,10 @@ try {
   const data = JSON.parse(fs.readFileSync(
     path.join(dataPath, 'positions.json') ) );
 
-  for(let p of data.positions) {
+  data.positions.forEach( (p) =>  {
     setup.labels.push(p[0]);
     setup.coordinates.push(p[1]);
-  }
+  });
 
   if(typeof data.width !== 'undefined') {
     setup.width = data.width;
@@ -56,7 +56,8 @@ try {
   }
 } catch(error) {
   console.log('Error loading positions from'
-              + path.join(dataPath, 'positions.json') );
+              + path.join(dataPath, 'positions.json')
+              + error.message);
 }
 
 

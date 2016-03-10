@@ -2,6 +2,53 @@
 
 let dom = require('../common/dom');
 
+dom.Presets = class {
+  constructor(params) {
+    this.setter = params.setter; // undefined is fine
+    this.getter = params.getter; // undefined is fine
+    this.save = params.save;
+
+    const origin = (typeof params.DOMOrigin !== 'undefined'
+                   ? params.DOMOrigin : document.body);
+
+    this.element = document.createElement('div');
+    this.element.classList.add('presets');
+    origin.appendChild(this.element);
+
+    const child = document.createElement('div');
+    child.innerHTML = 'Preset ';
+    this.element.appendChild(child);
+
+    const that = this; // problem with gulp-es6-transpiler 1.0.1
+
+    that.select = new dom.Select( {
+      DOMOrigin: this.element,
+      DOMClass: 'preset',
+      options: params.options,
+      setter: that.setter,
+      getter: that.getter,
+    });
+
+    that.saveButton = new dom.Button({
+      DOMOrigin: this.element,
+      DOMClass: 'save',
+      text: 'Save',
+      setter: that.save,
+    });
+
+  }
+
+  setOptions(options) {
+    this.select.setOptions(options);
+  }
+
+  update() {
+    this.select.update();
+  }
+};
+
+
+
 dom.createReceiverElement = function (origin) {
   const element = document.createElement('div');
   element.classList.add('receiver');
@@ -19,7 +66,6 @@ dom.MasterGain = class {
   constructor(params) {
     this.setter = params.setter; // undefined is fine
     this.getter = params.getter; // undefined is fine
-    this.validation = params.validation;
 
     const origin = (typeof params.DOMOrigin !== 'undefined'
                    ? params.DOMOrigin : document.body);
@@ -102,7 +148,6 @@ dom.GainThreshold = class {
   constructor(params) {
     this.setter = params.setter; // undefined is fine
     this.getter = params.getter; // undefined is fine
-    this.validation = params.validation;
 
     const origin = (typeof params.DOMOrigin !== 'undefined'
                    ? params.DOMOrigin : document.body);
@@ -185,7 +230,6 @@ dom.DelayThreshold = class {
   constructor(params) {
     this.setter = params.setter; // undefined is fine
     this.getter = params.getter; // undefined is fine
-    this.validation = params.validation;
 
     const origin = (typeof params.DOMOrigin !== 'undefined'
                    ? params.DOMOrigin : document.body);
@@ -288,7 +332,6 @@ dom.AirSpeed = class {
   constructor(params) {
     this.setter = params.setter; // undefined is fine
     this.getter = params.getter; // undefined is fine
-    this.validation = params.validation;
 
     const origin = (typeof params.DOMOrigin !== 'undefined'
                    ? params.DOMOrigin : document.body);
@@ -321,7 +364,7 @@ dom.AirSpeed = class {
     child = document.createElement('br');
     this.element.appendChild(child);
 
-    for(let v of [-100, -50, -10, -5]) {
+    for(let v of [-100, -50, -10, -5, -1, -0.5, -0.1]) {
       child = new dom.Button( {
         DOMOrigin: this.element,
         DOMClass: 'input-control',
@@ -383,7 +426,7 @@ dom.AirSpeed = class {
       }
     } );
 
-    for(let v of [5, 10, 50, 100]) {
+    for(let v of [0.1, 0.5, 1, 5, 10, 50, 100]) {
       child = new dom.Button( {
         DOMOrigin: this.element,
         DOMClass: 'input-control',
@@ -410,7 +453,6 @@ dom.DistanceSpread = class {
   constructor(params) {
     this.setter = params.setter; // undefined is fine
     this.getter = params.getter; // undefined is fine
-    this.validation = params.validation;
 
     const origin = (typeof params.DOMOrigin !== 'undefined'
                    ? params.DOMOrigin : document.body);
@@ -437,7 +479,7 @@ dom.DistanceSpread = class {
     } );
 
     child = document.createElement('div');
-    child.innerHTML = ' dB/m';
+    child.innerHTML = ' dB';
     this.element.appendChild(child);
 
     child = document.createElement('br');
@@ -512,7 +554,6 @@ dom.ReflectionTransmission = class {
   constructor(params) {
     this.setter = params.setter; // undefined is fine
     this.getter = params.getter; // undefined is fine
-    this.validation = params.validation;
 
     const origin = (typeof params.DOMOrigin !== 'undefined'
                    ? params.DOMOrigin : document.body);
@@ -545,7 +586,7 @@ dom.ReflectionTransmission = class {
     child = document.createElement('br');
     this.element.appendChild(child);
 
-    for(let v of [-0.5, -0.1, -0.05, 0.01]) {
+    for(let v of [-0.5, -0.1, -0.05, -0.01]) {
       child = new dom.Button( {
         DOMOrigin: this.element,
         DOMClass: 'input-control',

@@ -9,11 +9,11 @@ const debug = require('debug')('soundworks:woodland:audio');
 audio.ShakerSynth = class {
   constructor(params = {}) {
     this.acceleration = params.acceleration;
-    const gain = (typeof params.gain !== 'undefined'
-                  ? params.gain
-                  : 0);
+    this.gain = utils.dBToLin(typeof params.gain !== 'undefined'
+                              ? params.gain
+                              : 0);
 
-    this.noiseBuffer = this.generateNoiseBuffer();
+    this.noiseBuffer = audio.generateNoiseBuffer();
     this.bufferSource = null;
 
     this.minCutoff = 10;
@@ -33,35 +33,12 @@ audio.ShakerSynth = class {
     this.lowpass.connect(this.highpass);
 
     this.masterGain = audio.context.createGain();
-    this.masterGainSet(gain);
 
     this.highpass.connect(this.masterGain);
 
     this.masterGain.connect(audio.context.destination);
 
     this.accelerationHandler = this.accelerationHandler.bind(this);
-  }
-
-  masterGainSet(masterGain) {
-    this.masterGain.gain.value = utils.dBToLin(masterGain);
-  }
-
-  generateNoiseBuffer () {
-    const duration = 3; // second
-    const gain = -10; // dB
-
-    const length = duration * audio.context.sampleRate;
-    const amplitude = utils.dBToLin(gain);
-    const channelCount = audio.context.destination.channelCount;
-    let buffer = audio.context.createBuffer(channelCount, length,
-                                            audio.context.sampleRate);
-    for(let c = 0; c < channelCount; ++c) {
-      let data = buffer.getChannelData(c);
-      for(let i = 0; i < length; ++i) {
-        data[i] = amplitude * (Math.random() * 2 - 1);
-      }
-    }
-    return buffer;
   }
 
   accelerationHandler(event) {
@@ -92,12 +69,13 @@ audio.ShakerSynth = class {
 
     this.masterGain.gain.cancelScheduledValues(now);
     this.masterGain.gain.setValueAtTime(0, now);
-    this.masterGain.gain.linearRampToValueAtTime(1, now + fadeInDuration);
+    this.masterGain.gain.linearRampToValueAtTime(this.gain,
+                                                 now + fadeInDuration);
 
     this.highpass.frequency.cancelScheduledValues(now);
     this.highpass.frequency.setValueAtTime(this.maxCutoff, now);
     this.highpass.frequency.exponentialRampToValueAtTime(this.minCutoff,
-                                               now + fadeInDuration);
+                                                         now + fadeInDuration);
 
     this.acceleration.addListener(this.accelerationHandler);
   }
@@ -109,7 +87,7 @@ audio.ShakerSynth = class {
       this.acceleration.removeListener(this.accelerationHandler);
 
       this.masterGain.gain.cancelScheduledValues(now);
-      this.masterGain.gain.setValueAtTime(1, now);
+      this.masterGain.gain.setValueAtTime(this.gain, now);
       this.masterGain.gain.linearRampToValueAtTime(0, now + fadeOutDuration);
 
       this.highpass.frequency.cancelScheduledValues(now);
@@ -146,6 +124,7 @@ audio.Propagation = class {
     this.masterGain.gain.value = utils.dBToLin(masterGain);
   }
 
+  // TODO: re-use the same buffer, to avoid memory allocation
   sourcesApply(samples, sampleRate) {
     if(sampleRate !== audio.context.sampleRate) {
       debug('sources sample rate (%) differs from audio sample rate (%s)',

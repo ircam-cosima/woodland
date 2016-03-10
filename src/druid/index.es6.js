@@ -22,6 +22,28 @@ class DruidClientPerformance extends app.clientSide.Performance {
 
     this.display = {};
 
+    this.preset = 'default';
+    this.display.presets = new app.dom.Presets( {
+      DOMOrigin: this.view,
+      options: [],
+      setter: (preset) => {
+        that.preset = preset;
+        for(let v in that.presets[preset]) {
+          this[v] = that.presets[preset][v];
+        }
+        that.parametersSend();
+      },
+      getter: () => { return that.preset; },
+      save: () => {
+        const name = window.prompt('Save preset? \n'
+                                   +'(Do not change the name to update.)',
+                                   that.preset);
+        if(name) {
+          that.presetSave(name);
+        }
+      },
+    });
+
     this.display.render = new app.dom.Button( {
       DOMOrigin: this.view,
       DOMClass: 'render',
@@ -112,9 +134,37 @@ class DruidClientPerformance extends app.clientSide.Performance {
       getter: () => { return that.reflectionTransmission; }
     } );
 
-
     this.launcher = '';
     this.labels = [];
+
+  }
+
+  presetsUpdate(presets) {
+    this.presets = presets;
+    const that = this;
+    const options = [];
+    for(let p in presets) {
+      if(presets.hasOwnProperty(p) ) {
+        options.push(p);
+      }
+    }
+    options.sort();
+
+    this.display.presets.setOptions(options);
+  }
+
+  presetSave(presetName) {
+    this.presets[presetName] = {
+      soundFile: this.soundFile,
+      masterGain: this.masterGain,
+      gainThreshold: this.gainThreshold,
+      delayThreshold: this.delayThreshold,
+      airSpeed: this.airSpeed,
+      distanceSpread: this.distanceSpread,
+      reflectionTransmission: this.reflectionTransmission,
+    };
+
+    app.client.send('woodland:druid-presets', this.presets);
   }
 
   labelsUpdate(labels) {
@@ -192,6 +242,10 @@ class DruidClientPerformance extends app.clientSide.Performance {
     } );
     app.client.send('woodland:parameters-request');
 
+    app.client.receive('woodland:druid-presets', (presets) => {
+      this.presetsUpdate(presets);
+    });
+    app.client.send('woodland:druid-presets-request');
 
     app.client.receive('woodland:receiver', (label) => {
       app.dom.updateReceiverElement(this.display.receiverElement, label);
