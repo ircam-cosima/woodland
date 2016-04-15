@@ -202,7 +202,8 @@ class WoodlandServerPerformance extends serverSide.Performance {
       }
 
       if(typeof params.delayThreshold !== 'undefined') {
-        this.delayThreshold = params.delayThreshold;
+        // hard limit to 60 seconds (see player/audio.Propagation)
+        this.delayThreshold = Math.min(60, params.delayThreshold);
       }
 
       if(typeof params.airSpeed !== 'undefined') {

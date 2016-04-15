@@ -181,11 +181,12 @@ class WoodlandClientPerformance extends app.clientSide.Performance {
 
     app.client.receive('woodland:render', (time) => {
       this.display.status.update('rendering');
+      const that = this;
       this.propagation.render(
         this.sync.getLocalTime(time - this.compensation.delay),
         () => {
-          this.display.status.update('...');
-      });
+          that.display.status.update('...');
+        });
     });
 
     this.distances = null;
@@ -291,7 +292,6 @@ app.init = function () {
         app.workers.propagation.debug('sources-apply');
         app.performance.display.status.update('propagating: computing');
         app.performance.propagation.sourcesApply(m.data.samples, m.data.sampleRate);
-        // app.performance.propagation.sourcesApply(m.data.sources, m.data.sourcesDelayMax);
         app.workers.propagation.debug('propagated');
         app.performance.display.status.update('propagated');
         app.client.send('woodland:propagated');

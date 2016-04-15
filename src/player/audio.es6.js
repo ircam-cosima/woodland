@@ -107,7 +107,14 @@ audio.Propagation = class {
                   ? params.gain
                   : 0);
 
-    this.propagationBuffer = null;
+    // pre-allocation
+    this.propagationBuffer = audio.context.createBuffer(
+      1, // single channel
+      audio.context.sampleRate * 60, // 60 seconds is the hard limit
+      audio.context.sampleRate);
+
+    // actual duration
+    this.propagationDuration = 0; // in seconds
 
     this.convolver = audio.context.createConvolver();
     this.convolver.buffer = audio.generateClackBuffer(); // source sound
@@ -131,9 +138,7 @@ audio.Propagation = class {
             sampleRate, audio.context.sampleRate);
     }
 
-    this.propagationBuffer = audio.context.createBuffer(
-      1, // single channel
-      samples.length, sampleRate);
+    this.propagationDuration = samples.length / audio.context.sampleRate;
 
     const data = this.propagationBuffer.getChannelData(0);
     data.set(samples);
@@ -153,9 +158,12 @@ audio.Propagation = class {
       propagation.connect(this.convolver);
 
       propagation.start(time);
-      if(typeof callback !== 'undefined') {
-        propagation.onended = callback;
-      }
+      // stop as (recycled) buffer might be longer
+      propagation.stop(time + this.propagationDuration);
+
+      setTimeout(callback,
+                 1e3 * (time - audio.context.currentTime
+                         + this.propagationDuration) );
     }
   }
 
