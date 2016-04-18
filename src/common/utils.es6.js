@@ -25,7 +25,8 @@ utils.Blocked = class {
    * Periodic test for event loop, and report of it was blocked.
    *
    * @constructs utils.Blocked
-   * @param {Number} callback when blocked for more than threshold
+   * @param {utils.Blocked~report} callback when blocked for more than
+   * threshold
    * @param {Number} threshold in ms
    */
   constructor(callback, threshold = 10) {
