@@ -1,3 +1,9 @@
+/**
+ * @fileOverview Simple process manager to help debugging, by using
+ * different ports.
+ * @author Jean-Philippe.Lambert@ircam.fr
+ * @license BSD-3-Clause
+ */
 'use strict';
 
 const path = require('path');

@@ -4,7 +4,7 @@
     "Jean-Philippe.Lambert@ircam.fr"
   ],
   "description": "Distributed reverberation experiment",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "license": "BSD-3-Clause",
   "repository": {
     "type": "git",

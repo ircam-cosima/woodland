@@ -41,11 +41,11 @@ utils.Blocked = class {
         const hrtime = process.hrtime();
         return hrtime[0] * 1e3 + hrtime[1] * 1e-6;
       };
-    } else if(typeof window !== 'undefined'
-              && typeof window.performance !== 'undefined'
-              && typeof window.performance.now === 'function') {
+    } else if(typeof self !== 'undefined'
+              && typeof self.performance !== 'undefined'
+              && typeof self.performance.now === 'function') {
       // modern browser
-      this.time = () => { return window.performance.now(); };
+      this.time = () => { return self.performance.now(); };
     } else {
       this.time = () => { return Date.now(); };
     }
