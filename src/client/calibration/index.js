@@ -1,3 +1,5 @@
+import CalibrationService from '../shared/CalibrationService';
+
 'use strict';
 
 let app = window.app || {};

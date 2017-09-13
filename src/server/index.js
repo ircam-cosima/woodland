@@ -1,7 +1,9 @@
 import 'source-map-support/register'; // enable sourcemaps in node
 import path from 'path';
 import * as soundworks from 'soundworks/server';
+import CalibrationService from './CalibrationService';
 import WoodlandExperience from './WoodlandExperience';
+import CalibrationExperience from './CalibrationExperience';
 
 const dir = path.join(process.cwd(), 'public');
 const fs = require('fs');
@@ -55,19 +57,14 @@ soundworks.server.setClientConfigDefinition((clientType, config, httpRequest) =>
 // `src/server/playerExperience.js`) and the server side `playerExperience`.
 // - we could also map activities to additional client types (thus defining a
 //   route (url) of the following form: `/${clientType}`)
-const experience = new WoodlandExperience(['player', 'druid'], config.setup);
+const calibrationExperience = new CalibrationExperience('calibration', {
+  persistent: {
+    path: dataPath,
+    file: 'calibration.json',
+  }
+});
 
-// const calibration = new serverSide.Calibration( {
-//   persistent: {
-//     path: dataPath,
-//     file: 'calibration.json'
-//   }
-// });
-
-// const calibrationPerformance = new CalibrationServerPerformance({
-//   server: server,
-//   calibration: calibration
-// });
+const woodlandExperience = new WoodlandExperience(['player', 'druid'], config.setup);
 
 // start application
 soundworks.server.start();

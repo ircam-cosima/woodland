@@ -1,25 +1,14 @@
-'use strict';
+import * as soundworks from 'soundworks/server';
+import debug from 'debug';
+const log = debug('soundworks:calibration');
 
-// standard libraries
-const debug = require('debug')('soundworks:calibration');
 
-// Soundworks library
-const serverSide = require('soundworks/server');
+class CalibrationExperience extends soundworks.Experience {
+  constructor(clientType, options) {
+    super(clientType);
 
-class CalibrationServerPerformance extends serverSide.Performance {
-  constructor(params = {}) {
-    super();
-    this.server = (typeof params.server !== 'undefined'
-                   ? params.server
-                   : serverSide.server);
-
-    this.sync = (typeof params.sync !== 'undefined'
-                 ? params.sync
-                 : new serverSide.Sync() );
-
-    // static strings
-    CalibrationServerPerformance.serverParametersName =
-      'calibration:server-params';
+    this.sync = this.require('sync');
+    this.calibration = this.require('calibration', options);
 
     // click
     this.active = true; // run by default
@@ -34,6 +23,10 @@ class CalibrationServerPerformance extends serverSide.Performance {
 
     // run by default
     this.click();
+  }
+
+  start() {
+
   }
 
   getServerParameters() {
@@ -61,15 +54,15 @@ class CalibrationServerPerformance extends serverSide.Performance {
   }
 
   emitServerParameters(client) {
-    const name = CalibrationServerPerformance.serverParametersName;
+    const name = 'calibration:server-params';
     const params = this.getServerParameters();
 
     if(typeof client === 'undefined') {
-      debug('broadcast server parameters');
-      this.server.broadcast('calibration', name, params);
+      log('broadcast server parameters');
+      this.broadcast('calibration', null, name, params);
     } else {
-      debug('send sever parameters to client');
-      client.send(name, params);
+      log('send sever parameters to client');
+      this.send(client, name, params);
     }
   }
 
@@ -78,7 +71,7 @@ class CalibrationServerPerformance extends serverSide.Performance {
 
     this.emitServerParameters(client);
 
-    client.receive(CalibrationServerPerformance.serverParametersName,
+    this.receive(client, 'calibration:server-params',
                    (params) => {
                      const activate = !this.active && params.active;
                      this.setServerParameters(params);
@@ -102,7 +95,7 @@ class CalibrationServerPerformance extends serverSide.Performance {
 
         // too late
         if(this.nextClick < now) {
-          debug('too late by %s s', now - this.nextClick);
+          log('too late by %s s', now - this.nextClick);
           // good restart from now
           this.nextClick +=
             Math.ceil((now - this.nextClick) / this.period) * this.period;
@@ -110,12 +103,12 @@ class CalibrationServerPerformance extends serverSide.Performance {
           // next one might be soon: look ahead
           if(this.nextClick < now + this.lookahead) {
             --this.number;
-            debug('soon in %s s', this.nextClick - now);
+            log('soon in %s s', this.nextClick - now);
             this.clickEmit(this.nextClick);
             this.nextClick += this.period;
           }
         } else {
-          debug('trigger %s (in %s s)', this.nextClick, this.nextClick - now);
+          log('trigger %s (in %s s)', this.nextClick, this.nextClick - now);
           this.clickEmit(this.nextClick);
           this.nextClick += this.period;
         }
@@ -133,11 +126,9 @@ class CalibrationServerPerformance extends serverSide.Performance {
   }
 
   clickEmit(nextClick) {
-    this.server.broadcast('calibration', 'performance:click', {
-      start: nextClick
-    });
+    this.broadcast('calibration', null, 'performance:click', { start: nextClick });
   }
 
 } // class CalibrationServerPerformance
 
-module.exports = exports = CalibrationServerPerformance;
+export default CalibrationExperience;

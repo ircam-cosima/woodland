@@ -18,6 +18,7 @@ class PlayerExperience extends soundworks.Experience {
 
     this.platform = this.require('platform', { features: ['web-audio'] });
     this.placer = this.require('placer');
+    this.calibration = this.require('calibration');
     // this.checkin = this.require('checkin');
     this.sync = this.require('sync');
     this.audioBufferManager = this.require('audio-buffer-manager', {
@@ -84,6 +85,8 @@ class PlayerExperience extends soundworks.Experience {
     const app = this.app;
     const that = this;
     // this.calibration.load();
+
+    console.log(this.calibration);
 
     this.view = new soundworks.View(template, {}, {}, {
       id: 'player',

@@ -24,6 +24,7 @@ class WoodlandExperience extends soundworks.Experience {
     // this.checkin = this.require('checkin');
     this.sync = this.require('sync');
     this.audioBufferManager = this.require('audio-buffer-manager');
+    this.calibration = this.require('calibration');
 
     this.setup = setup;
 

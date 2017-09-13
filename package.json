@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "babel-runtime": "^6.6.1",
+    "calibration": "github:ircam-cosima/calibration",
     "debug": "^2.6.4",
     "soundworks": "collective-soundworks/soundworks#v2.1.0",
     "source-map-support": "^0.4.0"

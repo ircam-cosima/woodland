@@ -2,6 +2,7 @@ const app = window.app = {};
 // import client side soundworks and player experience
 import * as soundworks from 'soundworks/client';
 import PlayerExperience from './PlayerExperience';
+import CalibrationService from '../shared/CalibrationService';
 import serviceViews from '../shared/serviceViews';
 import debug from 'debug';
 
