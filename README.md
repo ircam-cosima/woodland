@@ -21,9 +21,9 @@ You need [Node.js]. Install the dependencies and build:
 npm install ;
 cd node_modules ;
 npm install ;
-gulp ;
+node_modules/.bin/gulp ;
 cd ../.. ;
-gulp
+node_modules/.bin/gulp ;
 ```
 
 Here is an example that starts the server without building again:

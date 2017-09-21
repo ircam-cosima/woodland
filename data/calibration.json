@@ -297,5 +297,106 @@
                 }
             ]
         ]
+    },
+    "Mozilla/5.0 (Linux; Android 4.2.2; STARADDICT III Build/JDQ39) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.91 Mobile Safari/537.36": {
+        "audio": [
+            [
+                "2017-09-15T14:48:10.595Z",
+                {
+                    "delay": 0.16,
+                    "gain": -6
+                }
+            ]
+        ],
+        "network": [
+            [
+                "2017-09-15T14:48:10.595Z",
+                {
+                    "delay": 0.01706662826668435,
+                    "delayMax": 0.08533314633336886
+                }
+            ]
+        ]
+    },
+    "Mozilla/5.0 (Linux; Android 6.0.1; SM-A320FL Build/MMB29K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.116 Mobile Safari/537.36": {
+        "audio": [
+            [
+                "2017-09-15T14:56:51.901Z",
+                {
+                    "delay": 0.24,
+                    "gain": -8
+                }
+            ]
+        ],
+        "network": [
+            [
+                "2017-09-15T14:56:51.901Z",
+                {
+                    "delay": 0.007733305333357521,
+                    "delayMax": 0.07733305333357521
+                }
+            ]
+        ]
+    },
+    "Mozilla/5.0 (Linux; Android 6.0; Archos 55 Helium Build/MRA58K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.89 Mobile Safari/537.36": {
+        "audio": [
+            [
+                "2017-09-15T14:59:49.534Z",
+                {
+                    "delay": 0.16,
+                    "gain": -1
+                }
+            ]
+        ],
+        "network": [
+            [
+                "2017-09-15T14:59:49.534Z",
+                {
+                    "delay": 0.009287965459498082,
+                    "delayMax": 0.09287965459498082
+                }
+            ]
+        ]
+    },
+    "Mozilla/5.0 (iPad; CPU OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.0 Mobile/14G60 Safari/602.1": {
+        "audio": [
+            [
+                "2017-09-15T15:02:38.910Z",
+                {
+                    "delay": 0.015,
+                    "gain": 8
+                }
+            ]
+        ],
+        "network": [
+            [
+                "2017-09-15T15:02:38.910Z",
+                {
+                    "delay": 0.009577813992405027,
+                    "delayMax": 0.01451227865504734
+                }
+            ]
+        ]
+    },
+    "Mozilla/5.0 (iPod touch; CPU iPhone OS 9_3_5 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13G36 Safari/601.1": {
+        "audio": [
+            [
+                "2017-09-15T15:42:28.576Z",
+                {
+                    "delay": 0,
+                    "gain": -10
+                }
+            ]
+        ],
+        "network": [
+            [
+                "2017-09-15T15:42:28.576Z",
+                {
+                    "delay": 0.027572402645000695,
+                    "delayMax": 0.03773161030403571
+                }
+            ]
+        ]
     }
 }
+
