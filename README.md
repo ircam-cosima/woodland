@@ -18,7 +18,11 @@ time is unique.
 You need [Node.js]. Install the dependencies and build:
 
 ``` shell
-npm install;
+npm install ;
+cd node_modules ;
+npm install ;
+gulp ;
+cd ../.. ;
 gulp
 ```
 
@@ -183,5 +187,5 @@ modifications for running in a browser.
 [positions.json]: ./data/positions.json
 [Soundworks]: https://github.com/collective-soundworks/soundworks
 [soundworks-calibration]: https://github.com/collective-soundworks/soundworks-calibration
-[utils.Blocked]: https://github.com/collective-soundworks/soundworks-woodland/blob/0.8.1/src/common/utils.es6.js#L18
+[utils.Blocked]: https://github.com/ircam-cosima/soundworks-woodland/blob/0.8.2/src/common/utils.es6.js#L18
 [Web Worker]: https://developer.mozilla.org/en-US/docs/Web/API/Worker
